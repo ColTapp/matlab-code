@@ -3857,12 +3857,6 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             p.refMode='quantile';
         end
         
-        if strcmp(hs.expmodepanel.SelectedObject.String,'Micrometer')
-            p.ExportMode='um';
-        else
-            p.ExportMode='px';
-        end
-        
         if strcmp(p.mode, 'TL')
             test=round(str2double(hs.linfitframe2.String));
 %             mx1=round(0.95*length(p.l));
