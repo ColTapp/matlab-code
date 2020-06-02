@@ -510,6 +510,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         dirUser=uigetdir(dirTemp,'please select the directory with the timelapse images');
         if dirUser==0; return; end %user cancelled
         
+        if writeperm(dirUser); errordlg('ColTapp needs Writting permisssion to operate. This permission was denied.'); return; end
+        
 %         b=struct();
         if ~exist('b', 'var')
             b=struct();
@@ -703,6 +705,15 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         hs.UserMess.String='Loading finished';drawnow
     end%load folder
+    function E=writeperm(dirUser)
+        [~,errmsg] = fopen([dirUser,'/testColTapp.m'],'a');
+        if ~isempty(errmsg)
+            E=1;
+        else
+            E=0;
+            delete ([dirUser,'/testColTapp.m'])
+        end
+    end
     function errorloading=chngDir
         %will return 1 if loading was correct. Loads a list of files in a
         %directory. Looks if previous mat files were already save, and
@@ -1478,7 +1489,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             elseif Fvar.imgenhanced2
                 if strcmp(p.imgmode, 'rgb') %transform into gray scale
                     Fvar.rgb=customcol2gray(Fvar.rgb);
-                    p.BW=0;
+                    p.BW=1;
                 end
                 Fvar.rgb=imadjust(Fvar.rgb);
             end
@@ -1508,7 +1519,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         delete(hs.fig); %otherwise staking up images, and memory leak
         hs.fig=axes('Parent', hs.FigPan, 'Color', [0.9 0.9 0.8], 'Position', [0 0 1 1]); %creating axes
-        hs.fig.Toolbar.Visible = 'off';
+        if isprop(hs.fig, 'Toolbar')
+            hs.fig.Toolbar.Visible = 'off';
+        end
         
         % update image
         showimage;
@@ -1644,17 +1657,31 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         if isfield(p, 'imOverlay')
            p=rmfield(p, 'imOverlay');
         end
-        save([dirS filesep dirS(p.del(end)+1:end) '_all.mat'], 'p', saveV, '-nocompression')
-        if p.savebackups
-            save([dirS filesep dirS(p.del(end)+1:end) date '_all.mat'], 'p', saveV, '-nocompression')
-        end
-        
-        if p.KymoChanged
-            save([dirS filesep dirS(p.del(end)+1:end) '_Kymograph.mat'], 'Kymo', saveV, '-nocompression');
+        if verLessThan('Matlab','9.2')
+            save([dirS filesep dirS(p.del(end)+1:end) '_all.mat'], 'p', saveV)
             if p.savebackups
-                save([dirS filesep dirS(p.del(end)+1:end) date '_Kymograph.mat'], 'Kymo', saveV, '-nocompression')
+                save([dirS filesep dirS(p.del(end)+1:end) date '_all.mat'], 'p', saveV')
             end
-        end 
+
+            if p.KymoChanged
+                save([dirS filesep dirS(p.del(end)+1:end) '_Kymograph.mat'], 'Kymo', saveV);
+                if p.savebackups
+                    save([dirS filesep dirS(p.del(end)+1:end) date '_Kymograph.mat'], 'Kymo', saveV)
+                end
+            end 
+        else
+            save([dirS filesep dirS(p.del(end)+1:end) '_all.mat'], 'p', saveV, '-nocompression')
+            if p.savebackups
+                save([dirS filesep dirS(p.del(end)+1:end) date '_all.mat'], 'p', saveV, '-nocompression')
+            end
+
+            if p.KymoChanged
+                save([dirS filesep dirS(p.del(end)+1:end) '_Kymograph.mat'], 'Kymo', saveV, '-nocompression');
+                if p.savebackups
+                    save([dirS filesep dirS(p.del(end)+1:end) date '_Kymograph.mat'], 'Kymo', saveV, '-nocompression')
+                end
+            end 
+        end
     end %save struct p containing all main data
     function voronoisave(dirS)
         p.voronoichanged=1;
@@ -1677,10 +1704,19 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
           else
           p.voronoichanged=0;
         end
-        if p.voronoichanged
-            save([dirS filesep dirS(p.del(end)+1:end) '_VoronoiEdges.mat'], 'VorEdg', saveV, '-nocompression');
-            if p.savebackups
-                save([dirS filesep dirS(p.del(end)+1:end) date '_VoronoiEdges.mat'], 'VorEdg', saveV, '-nocompression')
+        if verLessThan('Matlab','9.2')
+            if p.voronoichanged
+                save([dirS filesep dirS(p.del(end)+1:end) '_VoronoiEdges.mat'], 'VorEdg', saveV);
+                if p.savebackups
+                    save([dirS filesep dirS(p.del(end)+1:end) date '_VoronoiEdges.mat'], 'VorEdg', saveV)
+                end
+            end
+        else
+            if p.voronoichanged
+                save([dirS filesep dirS(p.del(end)+1:end) '_VoronoiEdges.mat'], 'VorEdg', saveV, '-nocompression');
+                if p.savebackups
+                    save([dirS filesep dirS(p.del(end)+1:end) date '_VoronoiEdges.mat'], 'VorEdg', saveV, '-nocompression')
+                end
             end
         end
     end %save struct VorEdg containing voronoi edges
@@ -1923,7 +1959,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
     end %function to create grayscale image from rgb image
     function showimage(~,~)
         if p.showImage
-            if p.BW && strcmp(p.imgmode, 'rgb') && ~Fvar.imgenhanced
+            if p.BW && strcmp(p.imgmode, 'rgb') && ~Fvar.imgenhanced && ~Fvar.imgenhanced2
                 if ~p.col2grayrun
                     Fvar.imgray=customcol2gray(Fvar.rgb);
                 end
@@ -2409,12 +2445,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         Choices=hEC.Choices;
     end %mini-GUI showing export options
     function checkRadCutOff(Choices)
-        Ri=round(str2num(Choices.Nums{3})); 
+        Ri=round(str2num(Choices.Nums{3}));  %#ok<ST2NM>
         p.WhichR=Ri(Ri>0);
     end %fetch distance cutoff
     function checkColAndFrExportLists(Choices)
-        OKfr=checkFrList(round(str2num(Choices.Nums{1}))); %this saves user list in p.frlist
-        OKcol=setpColList(round(str2num(Choices.Nums{2}))); %this saves user list in p.Collist
+        OKfr=checkFrList(round(str2num(Choices.Nums{1}))); %#ok<ST2NM> %this saves user list in p.frlist
+        OKcol=setpColList(round(str2num(Choices.Nums{2}))); %#ok<ST2NM> %this saves user list in p.Collist
         
         if ~OKfr || ~OKcol
             waitfor(errordlg({'The frame/colony list input was incorrect.'; 'Exporting for all colonies and/or frames'})); 
@@ -2904,7 +2940,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         dispi=0;
         for fr=sort(frames)
             dispi=dispi+1; 
-            if dispi/10==round(dispi/10); 
+            if dispi/10==round(dispi/10) 
                 hs.UserMess.String=['Calculating shape/color metrics (' num2str(100*dispi/numel(frames),2) '%)'];drawnow
             end
             img = imread([p.dir, filesep,p.l(fr).name]); %loading pic
@@ -3380,7 +3416,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                             b.meanrad(i)=nanmean(p.counts{p.focalframe,2});
                             b.Ncol(i)=length(p.counts{p.focalframe,2});
                             b.Nframes(i)=length(p.l);
-                            save([b.batchFile{1}, filesep, 'batchfilereport.mat'], 'b', saveV, '-nocompression')
+                            if verLessThan('Matlab','9.2')
+                                save([b.batchFile{1}, filesep, 'batchfilereport.mat'], 'b', saveV)
+                            else
+                                save([b.batchFile{1}, filesep, 'batchfilereport.mat'], 'b', saveV, '-nocompression')
+                            end
                         case 'Find Colonies'
                             tic
                             if strcmp(p.mode, 'TL')%we are in timelapse mode, colonies are found on the current frame
@@ -3445,7 +3485,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                                 b.meanrad(i)=nanmean(allc);
                             end
                             b.Nframes(i)=length(p.l);
-                            save([b.batchFile{1}, filesep, 'batchfilereport.mat'], 'b', saveV, '-nocompression')
+                            if verLessThan('Matlab','9.2')
+                                save([b.batchFile{1}, filesep, 'batchfilereport.mat'], 'b', saveV)
+                            else
+                                save([b.batchFile{1}, filesep, 'batchfilereport.mat'], 'b', saveV, '-nocompression')
+                            end
                     end
                     
                 catch %something else went wrong
@@ -3470,7 +3514,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     b.txt=[b.txt, 'spatial calibration factor missing, '];
                 end
             end
-        save([b.batchFile{1}, filesep, 'batchfilereport.mat'], 'b', saveV, '-nocompression')
+        if verLessThan('Matlab','9.2')
+            save([b.batchFile{1}, filesep, 'batchfilereport.mat'], 'b', saveV)
+        else
+            save([b.batchFile{1}, filesep, 'batchfilereport.mat'], 'b', saveV, '-nocompression')
+        end
         msgbox(b.txt);
         b.runningBatch=0;
     end %run the corresponding function
@@ -3758,6 +3806,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             close(hs.o);
         end
         axes(hs.fig);
+        set(hs.EnhanceImage2, 'Value', Fvar.imgenhanced);
+        set(hs.EnhanceImage, 'Value', Fvar.imgenhanced2);
         disableGUI(0);
         refresh(0);
     end%close options
@@ -3771,7 +3821,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             Fvar.imgenhanced=0;
             p.imgMethod=hs.grayopt2.Value;
             p.iold=0; %in order to ensure that image is reloaded and calculated
-        else
+        elseif p.i==p.iold
             p.iold=p.i;
         end
        
@@ -4080,14 +4130,13 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             p.colList=randsample(1:size((p.counts{p.i,1})),1);
         end
         
-        refresh(0);
-        img=Fvar.rgb;
+        img = imread([p.dir, filesep,p.l(p.i).name]); %loading pic
         hs.UserMess.String='Image examples are calculated. Please wait..';drawnow
         disableGUI(1);%disable the GUI
         for whichCol=p.colList
             center=[round(p.counts{p.i,1}(whichCol,2)),round(p.counts{p.i,1}(whichCol,1))]; %contains the centers of colonies
             
-            Zone=round(p.counts{p.i,2}(whichCol)*p.Zonesize); %the analyzed zone is Zonesize fold bigger than the last radii
+            Zone=round(p.counts{p.i,2}(whichCol)*p.Zonesize*1.5); %the analyzed zone is Zonesize fold bigger than the last radii
             rgbcol=img(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone,:);
             
             s=cell(15,1);
@@ -4156,7 +4205,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             defaultans = {num2str(p.imgMethod)};
             answer = inputdlg(prompt,dlg_title,num_lines,defaultans);
             
-            if isempty(answer); close(fig); axes(hs.fig);refresh(1); return; end %#ok<LAXES> %user cancelled
+            if isempty(answer)
+                close(fig); axes(hs.fig);refresh(1); %#ok<LAXES>
+                hs.UserMess.String=['Image method set to previous Nr. ',num2str(p.imgMethod)];
+                return; 
+            end  %user cancelled
             
             %repeat question until input was valid...
             while isnan(str2double(answer{1,1})) || round(str2double(answer{1,1}))<1||...
@@ -4181,10 +4234,13 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
     function BWCheckboxchange_Callback(~,~)
         p.BW=~p.BW;%toggle
         p.col2grayrun=0;
+        p.iold=0;
         if p.BW
             p.ShowNrCol='r';
         else
             p.ShowNrCol='k';
+            Fvar.imgenhanced2=0;
+            Fvar.imgenhanced=0;
         end
     end %grayscale checkbox
     function ShowColCheckboxchange_Callback(~,~)
@@ -5579,7 +5635,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             if strcmp(p.imgmode, 'rgb') %transform into gray scale
                 Fvar.rgb=imread([p.dir, filesep,p.l(p.i).name]); %loading pic
                 Fvar.rgb=customcol2gray(Fvar.rgb);
-                p.BW=0;
+                p.BW=1;
             end
 
             Fvar.rgb = mat2gray(Fvar.rgb - Fvar.background, Fvar.mat2grayRefWhole); %image enhancement
@@ -6513,10 +6569,8 @@ p.showplot=0; waittime=1;
         makeUndo(0); %saving for undos
         
         % instructions to users
-        hs.UserMess.String='click and hold on center of colony, drag radius to border, release & click again to confirm';drawnow
+        hs.UserMess.String='click and hold on center of colony, drag radius to border, release & click again to confirm';drawnow 
         
-        
-        %         Fvar.clickcall=0;
         if ~Fvar.clickcall
             %get colony center
             if strcmp(p.imgmode, 'rgb') && ~p.BW && ~Fvar.imgenhanced &&  ~Fvar.imgenhanced2
@@ -6612,7 +6666,7 @@ p.showplot=0; waittime=1;
         UpdateListNewCol(1) %adds one colony to all lists to match the new colonies
         
         if p.progress.TLrun %update the RadMean files with a nan line for that colony
-            makeUndo(1); %saving for undo purposes
+            makeUndo(2); %saving for undo purposes
             p.RadMean(end+1,:)=nan;
         end
         %refresh Graph
@@ -6643,8 +6697,7 @@ p.showplot=0; waittime=1;
                 p.focalframe=p.i;
             end
         end
-        
-        makeUndo(0);
+       
         % instructions to users
         hs.UserMess.String='Click on colony to remove';drawnow
         
@@ -6721,7 +6774,7 @@ p.showplot=0; waittime=1;
             p.counts_unregistered=p.counts;   
                 
             if p.progress.TLrun 
-                    makeUndo(1); %saving for undo purposes
+                    makeUndo(2); %saving for undo purposes
                     p.RadMean=p.RadMean(~in,:);
             end
             
@@ -6771,13 +6824,32 @@ p.showplot=0; waittime=1;
                     end
                 end
             end
-        elseif Fvar.lastUndo(end)==1 %the last action was TL related
+        elseif Fvar.lastUndo(end)==1 || Fvar.lastUndo(end)==2%the last action was TL related
             if p.progress.TLrun %is this necessary?
-
                 p.RadMean=Fvar.RadMean1;
                 Fvar.RadMean1=Fvar.RadMean2; Fvar.RadMean2=Fvar.RadMean3; Fvar.RadMean3=[];
             end
         end
+        
+        % if a colonie was deleted / added after a timelapse was calculated, one needs to undo both the colony list and the p.radmean. 
+        % This means that the undo should first fix the radmean (which was
+        % change last in add/remove functions, then fix the
+        % addition/deletion of the colonies.
+        if Fvar.lastUndo(end)==2
+                varUndos={'counts', 'centers','radii','UserLists'}; %the 3 variables that can be undone
+            for i=1:8 %refresh the 7 possible undos
+                for j=1:length(varUndos)
+                    if i==1
+                        p.([varUndos{j}])=Fvar.([varUndos{j},num2str(i)]);
+                    elseif i==8
+                        Fvar.([varUndos{j},num2str(i-1)])=[];
+                    else
+                        Fvar.([varUndos{j},num2str(i-1)])=Fvar.([varUndos{j},num2str(i)]);
+                    end
+                end
+            end
+            Fvar.lastUndo(2:end)=Fvar.lastUndo(1:end-1); Fvar.lastUndo(1)=nan;
+        end 
         
         % Updating list of actions:
         Fvar.lastUndo(2:end)=Fvar.lastUndo(1:end-1); Fvar.lastUndo(1)=nan;
@@ -6785,6 +6857,8 @@ p.showplot=0; waittime=1;
         if ~p.disableSave
             saveall(p.dirS);
         end
+        
+        
         refresh(1)    
     end %undo button
     function makeUndo(whichUndo)
@@ -6795,28 +6869,27 @@ p.showplot=0; waittime=1;
         Fvar.lastUndo(1:end-1)=Fvar.lastUndo(2:end); Fvar.lastUndo(end)=whichUndo;
         
         if whichUndo==0 %last action is related to add/remove cols
-        varUndos={'counts', 'centers','radii','UserLists'}; %the 3 variables that can be undone
-        for i=7:-1:1 %I chose 7 undos... ¯\_(ツ)_/¯
-            for j=1:length(varUndos)
-                if i==1 %this is actually done last
-                    Fvar.([varUndos{j},num2str(i)])=p.([varUndos{j}]);
-                else
-                    Fvar.([varUndos{j},num2str(i)])=Fvar.([varUndos{j},num2str(i-1)]);
+            varUndos={'counts', 'centers','radii','UserLists'}; %the 3 variables that can be undone
+            for i=7:-1:1 %I chose 7 undos... ¯\_(ツ)_/¯
+                for j=1:length(varUndos)
+                    if i==1 %this is actually done last
+                        Fvar.([varUndos{j},num2str(i)])=p.([varUndos{j}]);
+                    else
+                        Fvar.([varUndos{j},num2str(i)])=Fvar.([varUndos{j},num2str(i-1)]);
+                    end
                 end
             end 
-        end
-
-        elseif whichUndo==1
+        elseif whichUndo==1 || whichUndo==2
             varUndos='RadMean'; %the 1 variables that can be undone
-           for i=3:-1:1 %I chose 3 undos... ¯\_(ツ)_/¯
+            for i=3:-1:1 %I chose 3 undos... ¯\_(ツ)_/¯
                 if i==1 %this is done last
                     Fvar.([varUndos,num2str(i)])=p.(varUndos);
                 else
                     Fvar.([varUndos,num2str(i)])=Fvar.([varUndos,num2str(i-1)]);
                 end
-            end 
+            end
         end
-    end %actual undo
+    end %creating an undo variable
     function HighlightCol_Callback(~,eventdata)
         pause(5/1000);
         whichCol=[];
@@ -7543,7 +7616,7 @@ p.showplot=0; waittime=1;
                     spmis=1;
                 end
                 catch
-                    spmis=1;
+                    spmis=1; 
                     hs.UserMess.String='Spatial calibration for at least one frame/folder is missing';drawnow
                     return
                 end
