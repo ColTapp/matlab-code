@@ -8354,7 +8354,7 @@ p.showplot=0; waittime=1;
                         p.counts_unregistered{indr,1}(whichCol,2)=p.counts_unregistered{p.i,1}(whichCol,2);
 
                         %and recalc the registered
-                        p.counts{indr,1}=p.counts_unregistered{indr,1}+p.shift(indr,:);
+                        p.counts{indr,1}(whichCol,:)=p.counts_unregistered{indr,1}(whichCol,:)+p.shift(indr,:);
                     end
                 end
                     
@@ -10057,7 +10057,7 @@ p.showplot=0; waittime=1;
             p.cannythresh(whichCol,1)=get(k.canlow,'Value');
             set(k.changes, 'String', 'Please wait...');
             drawradkymocor
-            set(k.changes, 'String', ['Canny high threshold changed to ', num2str(p.cannythresh(whichCol,1))]);
+            set(k.changes, 'String', ['Canny low threshold changed to ', num2str(p.cannythresh(whichCol,1))]);
         end
         function strtime_slider(~,~)
             if p.kymomode(whichCol)~=2
