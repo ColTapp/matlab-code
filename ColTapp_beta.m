@@ -706,12 +706,13 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         hs.UserMess.String='Loading finished';drawnow
     end%load folder
     function E=writeperm(dirUser)
-        [~,errmsg] = fopen([dirUser,'/testColTapp.m'],'a');
+        [fid,errmsg] = fopen([dirUser,filesep,'testColTapp.m'],'a');
         if ~isempty(errmsg)
             E=1;
         else
             E=0;
-            delete ([dirUser,'/testColTapp.m'])
+            fclose(fid);
+            delete([dirUser,filesep,'testColTapp.m']);
         end
     end
     function errorloading=chngDir
