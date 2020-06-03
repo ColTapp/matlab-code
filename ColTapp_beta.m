@@ -4085,8 +4085,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             p.UserColNb=round(str2double(answer{1})); %user input
             %do some checks if the input was in a sensible way, if not give
             %error and lets user to repeat
-            if sum(p.UserColNb<0) || isempty(p.UserColNb) || sum(isnan(p.UserColNb))
-                waitfor(errordlg('The input for the colonies was in a wrong format. Try again.'));p.UserColNb=0; continue;
+            if sum(p.UserColNb<=0) || isempty(p.UserColNb) || sum(isnan(p.UserColNb))
+                waitfor(errordlg('The input for the colony was in a wrong format. Also, only 1 colony possible. Try again.'));p.UserColNb=0; continue;
             end
             
             %then save the colonies list into the p.colList. if the input was
@@ -4881,7 +4881,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         if isempty(answer); return; end %user cancelled
         
         %colonies
-        p.UserColNb=str2double(answer{1,1}); %user input
+        p.UserColNb=str2num(answer{1,1}); %#ok<ST2NM> %user input
         if sum(p.UserColNb==0)>=1 % contains a zero: over all colonies
             p.colList=1:size(p.RadMean,1); %over all colonies
         elseif size(p.UserColNb,2)>=1 %user input more than one colony
@@ -4941,7 +4941,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         defaultans = {num2str(1)};
         answer = inputdlg(prompt,dlg_title,num_lines,defaultans);
         if isempty(answer); return; end %user cancelled
-        timeList2=round(str2double(answer{1,1}));
+        timeList2=round(str2num(answer{1,1})); %#ok<ST2NM>
         
         if sum(timeList2<1) || sum(timeList2>length(p.l)) || sum(isnan(timeList2))
             errordlg('The indicated frame is outside of the image range or was not a number. Try again.');return;
@@ -6898,7 +6898,7 @@ p.showplot=0; waittime=1;
             if strcmp(eventdata.EventName, 'KeyPress')
                 switch eventdata.Key
                     case 'return'
-                        whichCol=str2double(get(hs.HLinput, 'String')); %get the string in the field
+                        whichCol=str2num(get(hs.HLinput, 'String')); %#ok<ST2NM> %get the string in the field
                         if isempty(whichCol);hs.UserMess.String=''; drawnow; return; end %user cancelled
                     otherwise
                         return
@@ -6956,7 +6956,7 @@ p.showplot=0; waittime=1;
         end
     end %highlight colony
     function DeleteHighlightCol_Callback(~,~)
-        whichCol=str2double(get(hs.HLinput, 'String')); %get the string in the field
+        whichCol=str2num(get(hs.HLinput, 'String')); %#ok<ST2NM> %get the string in the field
         if isempty(whichCol);hs.UserMess.String=''; drawnow; return; end %user cancelled
         if sum(whichCol>length(p.counts{p.i,2}))>0
             hs.UserMess.String='Selected colonies out of bounds';drawnow
@@ -7619,7 +7619,7 @@ p.showplot=0; waittime=1;
                 catch
                     spmis=1; 
                     hs.UserMess.String='Spatial calibration for at least one frame/folder is missing';drawnow
-                    return
+%                     return
                 end
             end
             
@@ -7934,7 +7934,7 @@ p.showplot=0; waittime=1;
         mindist=str2double(answer{6,1});
         %error if not in range of colonies
             
-        colList1=round(str2double(answer{1,1}));
+        colList1=round(str2num(answer{1,1})); %#ok<ST2NM>
         OK=setpColList(colList1); %this function sets variable p.ColList
         if OK==0; return; end %there was an error in the list
         
@@ -8180,7 +8180,7 @@ p.showplot=0; waittime=1;
         
         answer = inputdlg(prompt,dlg_title,num_lines,defaultans);
         if isempty(answer);hs.UserMess.String='Center correction aborted';drawnow; return; end %user cancelled
-        colList1=round(str2double(answer{1,1}));
+        colList1=round(str2num(answer{1,1})); %#ok<ST2NM>
         OK=setpColList(colList1); %this function sets variable p.ColList
         if OK==0; return; end %there was an error in the list
         
@@ -9720,7 +9720,7 @@ p.showplot=0; waittime=1;
         answer = inputdlg(prompt,dlg_title,num_lines,defaultans);
         if isempty(answer);hs.UserMess.String='';drawnow; return; end %user cancelled
         
-        colList1=round(str2double(answer{1,1}));
+        colList1=round(str2num(answer{1,1})); %#ok<ST2NM>
         OK=setpColList(colList1); %this function sets variable p.ColList
         if OK==0; return; end %there was an error in the list
         
@@ -11033,7 +11033,7 @@ p.showplot=0; waittime=1;
                 if isempty(answer)
                     frameList =[];
                 else %user cancelled
-                    frameList=str2double(answer{1,1});
+                    frameList=str2num(answer{1,1}); %#ok<ST2NM>
                 end
                 done=checkFrList(frameList); frameList=p.frlist;
                 if ~done
@@ -11399,7 +11399,7 @@ p.showplot=0; waittime=1;
             answer = inputdlg(prompt,dlg_title,num_lines,defaultans);
             
             if isempty(answer); return; end %user cancelled
-            colList1=round(str2double(answer{1})); %user input
+            colList1=round(str2num(answer{1})); %#ok<ST2NM> %user input
             OK=setpColList(colList1); %this function sets variable p.ColList
             if OK==0; return; end %there was an error in the list
             
