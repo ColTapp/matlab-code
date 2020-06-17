@@ -4,7 +4,7 @@ function ColTapp_beta
 % suppress some warnings
 %#ok<*AGROW>
 %#ok<*HIST>
- 
+
 Fvar=struct(); %those are variables with fixed values in the software
 saveV='-v7';
 Fvar.imTBmiss=0;
@@ -333,7 +333,6 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         p.sensitivityN = 0.96; %sensitivity for colony detection
         p.SensitivityF1=0.8; %80% filling at least to be considered a colony
         p.SensitivityF2=0.9; %90% filling at least when conflicting colonies
-        p.color=2;%which rgb channel to choose %% obsolete? => channel 2 works for LB and blood
         p.Dt=7; % imfindcircles iterated with a step of this radius  size
         p.Goodsize=10; %this value works best for imfindcircles in colonies cases
         p.overlap=0.9;%how much colony overlaping is allowed to be?
@@ -364,7 +363,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         p.showImage=1; %set =0 to improve speed of the timelapse as the image is not shown for each step
         p.plotUnit=1; %1=plot pxl vs frame, 2=smoothed um vs h, 3=log um vs h, 4=all
         p.ExportMode='px'; %exporting in micrometer or pixel?
-        p.csvdelimiter=2; %delimter to use for csv export
+        p.csvdelimiter=1; %delimter to use for csv export
         p.savebackups=1; %disable the backup save by setting to 0 (.mat files with date in name)
         p.mouseaddrem=0; %turns to one if left click to add and middle to remove is enabled
         Fvar.lastUndo=nan(7,1); %this will contain values to track user actions to undo actions
@@ -1592,8 +1591,10 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         
         %updating user messages
         hs.UserMessFrame.String=['frame ',num2str(p.i), ' of ', num2str(length(p.l))];
-        set(hs.SetFrameSlider, 'Value', p.i);
-        set(hs.setframeinput, 'String', num2str(p.i));
+        if length(p.l)>1 && (p.i>=1 && p.i<=length(p.l))
+            set(hs.SetFrameSlider, 'Value', p.i);
+            set(hs.setframeinput, 'String', num2str(p.i));
+        end
         try %displaying the colonies per frame if in single mode or for each frame the same number if in TL mode
             if strcmp(p.mode, 'single') && ~isempty(p.counts{p.i})
                 hs.UserMessNumCol.String= [num2str(length(p.counts{p.i,2})) ' colonies on image']; drawnow
@@ -1725,7 +1726,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         p.iOverlay=p.i;
         if isempty(p.dirOverlay) %first time for the tick
             p.dirOverlay=uigetdir(p.dir,'please select the directory with the files to overlay');
-            if isempty(p.dirOverlay)
+            if isempty(p.dirOverlay) | p.dirOverlay==0 %#ok<OR2>
                 p.dirOverlay=[];
                 p.overlayIMGstatus=0;
                 hs.overlay.Value=p.overlayIMGstatus;%reset the overlay toggle
@@ -2175,7 +2176,16 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         disableGUI(1);
         Choices=ExportGUI(); %Choices contains a list of user Choices
         
-        if isempty(fieldnames(Choices)); disableGUI(0);return; end %no export wanted, or cancelled
+        if isempty(Choices)
+            hs.UserMess.String='No data exported';drawnow
+            disableGUI(0);
+            return 
+        end %no export wanted, or cancelled
+        if isempty(fieldnames(Choices))
+            hs.UserMess.String='No data exported';drawnow
+            disableGUI(0);
+            return 
+        end
         
         FileName=testRunningBatchfileName;
         % 1) Metadatafile:
@@ -2183,24 +2193,62 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
            metatdataWrite(FileName)
         end
         
-        % 2) R(t) or Var(fr) file
-        GroupExpC=0;GroupExpL=0;grpD=0; %some variables are exported as a group (colors and shape, lists)
+        % 2) other variables
+        
+        % precalculate variables
+        [Frames,Colonies]=checkColAndFrExportLists(Choices);
+        checkRadCutOff(Choices);
+        if strcmp(p.ExportMode,'um')
+            UM=p.umConversion;
+        else
+            UM=ones(size(p.umConversion));
+        end
+        
+        % spatial metrics
+        D=Choices.TickValues(strcmp(Choices.Ticklist,'D'));
+        D2=Choices.TickValues(strcmp(Choices.Ticklist,'D2'));
+        AD=Choices.TickValues(strcmp(Choices.Ticklist,'D2'));
+        if D||D2||AD % at least one spatial metric is asked for
+                hs.UserMess.String='Calculating distance metrics...';drawnow
+                CalcSpatialMetricsD(Frames,Colonies,UM,D,D2,AD); %calculated and stored in p.D, etc
+        end
+        
+        % create initial export matrix
+        if strcmp(p.mode,'TL')
+            cols=repmat(Colonies',numel(Frames),1);
+            frs=sort(repmat(Frames',numel(Colonies),1));
+        else
+            cols=[];frs=[];
+            for Fri=Frames
+                WhCol2=Colonies(Colonies<=length(p.Counts{Fri,2}));
+                cols=[cols;WhCol2'];
+                frs=[frs;ones(numel(Colonies),1)*Fri];
+            end
+        end
+        mtrxAll=table(cols,frs, 'VariableNames',{'Colonies','Frames'});
+        
+        % all color/shape are calculated together: this variable is set to 1 when the first color/shape export is done
+        Fvar.groupExpC=0; Fvar.groupExpL=0; 
+        
+        % append all exported needs
         for exportN=2:numel(Choices.TickValues) %over all ticks
             if Choices.TickValues(exportN) %the user wants an export
-                checkColAndFrExportLists(Choices);
-                checkRadCutOff(Choices);
-                [GroupExpC,GroupExpL,grpD]=writeVar(FileName,Choices.Ticklist{exportN},Choices,GroupExpC,GroupExpL,grpD,Choices.TLcsts, Choices.WideLong);
-            % note that the writeVar function checks mode and if time-lapse was run and exports different files accordingly
-            % it will calculate values if they don't exist, except for
-            % R(t). Many exceptions are taken into account in writeVar
+                mtrx=WhichTableExport(Choices.Ticklist{exportN},Choices,Frames,Colonies,UM); %make an export table
+                mtrxAll=[mtrxAll,mtrx]; %append to previous
             end
         end
         
-        % tell user
-        sep=strfind(FileName,filesep); 
-        hs.UserMess.String=['Data was exported in ' FileName(sep(end):end-4) 'XX.csv files'];drawnow
+        if size(mtrxAll,2)>2 %only export if user asked for some export
+            %sep=strfind(FileName,filesep);
+            FO=checkFile(FileName(1:end-4),{'_dat.csv'});if FO;return; end
+            writetable(mtrxAll, [FileName(1:end-4),'_dat.csv'], 'Delimiter',Fvar.csvdelimiterssymbol{p.csvdelimiter});
+            % tell user
+            hs.UserMess.String=['Data was exported in ' FileName(1:end-4),'_dat.csv files'];drawnow
+        else
+            hs.UserMess.String='No data exported';drawnow
+        end
         disableGUI(0);
-    end %called by button
+    end %called by export
     function FileName=testRunningBatchfileName
         if ~exist('b','var') || ~isstruct(b)
             b=struct();
@@ -2259,13 +2307,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         hEC.Obox=uix.HBox('Parent', hEC.main);
         hEC.Meta=uicontrol('Parent',hEC.Obox,'Style','checkbox','String','Export metadata');
         hEC.UMPX=uix.VBox('Parent',hEC.Obox);
-        hEC.UM=uicontrol('Parent',hEC.UMPX,'Style','checkbox','String','micrometers','Callback',@setmicromExport,'Value',strcmp(p.ExportMode,'um'));
-        hEC.PX=uicontrol('Parent',hEC.UMPX,'Style','checkbox','String','pixels','Callback',@setmicromExport,'Value',strcmp(p.ExportMode,'px'));
-        if strcmp(p.mode, 'TL')
-            hEC.TLcsts=uicontrol('Parent',hEC.Obox,'Style','checkbox','String','Single fr. cst.','TooltipString',mO.SFramCst);
-        else
-            uix.Empty('Parent', hEC.Obox);
+        if ~isempty(p.umConversion)
+            hEC.UM=uicontrol('Parent',hEC.UMPX,'Style','checkbox','String','micrometers','Callback',@setmicromExport,'Value',strcmp(p.ExportMode,'um'));
         end
+        hEC.PX=uicontrol('Parent',hEC.UMPX,'Style','checkbox','String','pixels','Callback',@setmicromExport,'Value',strcmp(p.ExportMode,'px'));
+        uix.Empty('Parent', hEC.Obox);
         hEC.CSVsep=uix.VBox('Parent',hEC.Obox);
         hEC.csvtext=uicontrol('Parent', hEC.CSVsep,'Style', 'text','String','CSV delimiter','FontSize',9, 'HorizontalAlignment', 'left');
         hEC.delimiterdrop= uicontrol('Parent',hEC.CSVsep,'Style', 'popup','String', Fvar.csvdelimiters,'FontSize',9, 'Value', p.csvdelimiter);
@@ -2294,7 +2340,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         elseif strcmp(p.mode, 'TL') && ~isempty(p.RadMean)
             hEC.TboxRT=uix.VBox('Parent',hEC.Tbox);
             hEC.RT=uicontrol('Parent',hEC.TboxRT,'Style','checkbox','String','R(fr)');
-            hEC.WideLong=uicontrol('Parent',hEC.TboxRT,'Style','checkbox','String','(use wide format)','TooltipString',mO.WideLong);
+            %hEC.WideLong=uicontrol('Parent',hEC.TboxRT,'Style','checkbox','String','(use wide format)','TooltipString',mO.WideLong);
         else
             hEC.RT=uicontrol('Parent',hEC.Tbox,'Style','checkbox','String','Radius');
         end
@@ -2411,10 +2457,10 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         function SaveExport(~,~)
             hEC.Choices.Ticklist=[{'Meta'},SiT,SiL,SiD,SiS,]; %the list of tickboxes
-            if strcmp(p.mode,'TL') %export two more tickboxes
-                hEC.Choices.TLcsts=hEC.TLcsts.Value;
-                hEC.Choices.WideLong=hEC.WideLong.Value;
-            end
+%             if strcmp(p.mode,'TL') %export two more tickboxes
+%                 %hEC.Choices.TLcsts=hEC.TLcsts.Value;
+%                 %hEC.Choices.WideLong=hEC.WideLong.Value;
+%             end
             hEC.Choices.NumFields={'WhichFr','WhichCol','WhichR','HPxlN','HRN'};
             % get values of all tickboxes
             hEC.Choices.TickValues=nan(1,numel(hEC.Choices.Ticklist));
@@ -2449,14 +2495,17 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         Ri=round(str2num(Choices.Nums{3}));  %#ok<ST2NM>
         p.WhichR=Ri(Ri>0);
     end %fetch distance cutoff
-    function checkColAndFrExportLists(Choices)
+    function [Frames,Colonies]=checkColAndFrExportLists(Choices)
+        %checking frames
         OKfr=checkFrList(round(str2num(Choices.Nums{1}))); %#ok<ST2NM> %this saves user list in p.frlist
-        OKcol=setpColList(round(str2num(Choices.Nums{2}))); %#ok<ST2NM> %this saves user list in p.Collist
-        
-        if ~OKfr || ~OKcol
-            waitfor(errordlg({'The frame/colony list input was incorrect.'; 'Exporting for all colonies and/or frames'})); 
-            return
+        if OKfr
+            Frames=p.frlist;
+        else
+            Frames=1:length(p.l);
         end
+        
+        [~,Colonies]=setpColList2(round(str2num(Choices.Nums{2})),Frames); %#ok<ST2NM> %this saves user list in p.Collist
+        
     end %fetch list of things to export
     function FO=checkFile(FN,Suffix)
         lastwarn='';FO=0;
@@ -2569,120 +2618,67 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             Fvar.csvdelimiterssymbol{p.csvdelimiter});
         
     end %write metadata
-    function [groupExpC,groupExpL,grpD]=writeVar(FileName,VarN,Choices,groupExpC,groupExpL,grpD,TLcsts, WideLong)
+    function mtrx=WhichTableExport(VarN,Choices, WhFr,WhCol,UM)
+        mtrx=[];
         % this function exports Var(t) or Var(fr) to a Var file. 
         % it exports p.counts => colonies found and corrected and...
         % ... for timelapse, it also exports RadMean
         % the function acts as a sorting function, because all variables
-        % are stored differently.
-        mtrx=[];WhCol=0;
-        WhFr=p.frlist;
-        if strcmp(p.mode,'TL')
-            WhCol=p.colList; 
-        else
-            for Fr=WhFr
-                WhCol=max(WhCol,numel(p.counts{Fr,2}));
-            end
-            WhCol=1:WhCol;
-        end
-         
-        % most variables have different formats
+        % are stored differently.  
+        % most variables have different formats. All are prepared in long format
         if strcmp(VarN,'RT')
-            mtrx=makeTableExportRT(WhFr,WhCol,WideLong);
+            mtrx=makeTableExportRT(WhFr,WhCol,UM);
         elseif strcmp(VarN,'Tapp')
-                mtrx=makeTableExportTA(WhFr,WhCol,TLcsts);
+            mtrx=makeTableExportTA(WhFr,WhCol);
         elseif strcmp(VarN,'GR')
-            if ~isempty(p.GR) %the calculation occured, and we are on TL. This will need to change
-                mtrx=makeTableExportGR(WhFr,WhCol,TLcsts);
-            end
-        elseif strcmp(VarN(1),'L') %this is a list
-            if ~groupExpL 
-                mtrx=makeTableExportL(WhFr,WhCol,Choices);
-                groupExpL=1;
-            else
-                mtrx=[]; 
-            end
-            VarN='UserLists';
-        elseif strcmp(VarN,'V') 
-            % the frame cell is different in timelapse and not timelapse
-            % so this is a special case
-                    hs.UserMess.String='checking Voronoi data...';drawnow
-
-            mtrx=makeTableExportV(WhCol,WhFr,'Voronoi');
-        elseif strcmp(VarN, 'D') || strcmp(VarN, 'D2') || strcmp(VarN, 'AD')
-            if ~grpD
-                hs.UserMess.String='Calculating distance metrics...';drawnow
-                CalcSpatialMetricsD;
-                grpD=1;
-            end
-            ttl=[];
+            mtrx=makeTableExportGR(WhFr,WhCol);
+        elseif strcmp(VarN(1),'L') && ~Fvar.groupExpL%this is a list
+            mtrx=makeTableExportL(WhFr,WhCol,Choices);
+            Fvar.groupExpL=1;
+        elseif strcmp(VarN,'V')
+            mtrx=makeTableExportV(WhCol,WhFr,UM);
+        elseif strcmp(VarN, 'D') || strcmp(VarN, 'D2') || strcmp(VarN, 'AD')       
+            %create table titles that correspond to cutoff radii    
+            ttl=[]; 
             for Ri=1:numel(p.WhichR)
-                ttl=[ttl,{['Rcut_',num2str(p.WhichR(Ri))]}];
+                ttl=[ttl,{[VarN,'Rcut_',num2str(p.WhichR(Ri))]}];
             end
-            mtrx=array2table(p.(VarN),'VariableNames',[{'Col','Frame'},ttl]);
-        
+            %export table
+            mtrx=array2table(p.(VarN)(:,3:end),'VariableNames',ttl);
         elseif strcmp(VarN,'Pos')
-            mtrx=makeTableExportPos(WhFr,WhCol);
-        else %this is a shape or color metric (all same data format)
-            if ~groupExpC
-                hs.UserMess.String='Calculating shape/color metrics...';drawnow
+            mtrx=makeTableExportPos(WhFr,WhCol,UM);
+        elseif Fvar.groupExpC==0 %this is a shape or color metric (all same data format)
+            % this can be lengthy, tell user
+            hs.UserMess.String='Calculating shape/color metrics...';drawnow
                 ExportColorsData(WhFr,WhCol,Choices); %this function requires to extract images, and thus calculates all the needed color metrics as one
-                mtrx=array2table(p.coloniesColors.Tbl,'VariableNames',p.coloniesColors.Titles);
-                groupExpC=1; %the data on shape and color is exported together, so no need to run the function several times
-            else
-                mtrx=[]; 
-            end
-            VarN='ShapeColors';
-        end
-        if  ~isempty(mtrx)
-            if numel(mtrx)~=1 %the export table could be a single cell user message
-                mtrx=removeTableNans(mtrx);
-            end
-            FO=checkFile(FileName(1:end-4),{[VarN,'.csv']});if FO;return; end
-            writetable(mtrx, [FileName(1:end-4),'_', VarN,'.csv'], 'Delimiter',...
-                Fvar.csvdelimiterssymbol{p.csvdelimiter});
+                mtrx=array2table(p.coloniesColors.Tbl(:,3:end),'VariableNames',p.coloniesColors.Titles(3:end));
+                Fvar.groupExpC=1; %the data on shape and color is exported together, so no need to run the function several times
         end
     end %write main variables
-    function mtrx=makeTableExportV(WhCol,WhFr,Name)
+    function mtrx=makeTableExportV(WhCol,WhFr,UM)
         %this function prepares a Voronoi export matrix
-        if strcmp(p.mode, 'TL')
-            if ~isempty(p.VoronoiAreas)
-                if strcmp(p.ExportMode, 'um')
-                 mtrx=table(WhCol',p.VoronoiAreas{1}(WhCol),'VariableNames',{'ColNum','VA'});
-                else
-                    mtrx=table(WhCol',p.VoronoiAreas{1}(WhCol)*p.umConversion(1)^2,'VariableNames',{'ColNum','VA'});
-                end
-            else
-                mtrx=table({'Voronoi area needs to be calculated prior to export'});
-            end
-        else %SI
-            if ~isempty(p.VoronoiAreas)
-            cN=[];frN=[];rN=[];
-            for Fri=WhFr
-                if ~isempty(p.VoronoiAreas{Fri})
-                    WhCol2=WhCol(WhCol<=length(p.VoronoiAreas{Fri})); %only export colonies within range
-                    if numel(WhCol2)>0
-                        cN=[cN;WhCol2']; % col number
-                        frN=[frN; ones(length(WhCol2),1)*Fri]; %frame number
-                        if strcmp(p.ExportMode, 'um')
-                            rN=[rN;p.VoronoiAreas{Fri}(WhCol2)*p.umConversion(Fri)^2];
-                        else
-                            rN=[rN;p.VoronoiAreas{Fri}(WhCol2)];
+        
+        % preparing an export conversion rate;
+        umConv=UM.^2;
+        
+        if ~isempty(p.VoronoiAreas)
+            if strcmp(p.mode, 'TL')
+                mtrx=table(repmat(p.VoronoiAreas{1}(WhCol)*umConv(1),numel(WhFr),1),'VariableNames',{'VA'});
+            else %EP mode
+                rN=[];
+                for Fri=WhFr
+                    if ~isempty(p.VoronoiAreas{Fri})
+                        WhCol2=WhCol(WhCol<=length(p.VoronoiAreas{Fri})); %only export colonies within range
+                        if numel(WhCol2)>0
+                            rN=[rN;p.VoronoiAreas{Fri}(WhCol2)*umConv(Fri)];
                         end
                     end
-                else
-                    cN=[cN;0]; frN=[frN;Fri];
-                    rN=[rN;nan];
                 end
+                mtrx=table(rN,'VariableNames',{'Voronoi'});
             end
-
-            mtrx=table(cN,frN,rN,'VariableNames',{'ColNum','FrameNum',Name});
-
-            else
-                mtrx=table({'Voronoi area needs to be calculated prior to export'});
-            end
+        else %the variable was not calculated
+            mtrx=exportMSg(WhFr,WhCol,'Voronoi area','Voronoi');
         end
-        
     end %export voronoi
     function mtrx=makeTableExportL(WhFr,WhCol,Choices)
         % creates a matrix for lists export
@@ -2693,7 +2689,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         whichList=Choices.TickValues(FirstL=='L');
         
         %Making variable names
-        titlesL={'Col','Fr'};
+        titlesL={};
         for Li=1:sum(FirstL=='L')
             Ln=p.UserLists.listOptions{Li+1}(4:end);
             Ln(Ln==' ')='_';
@@ -2702,140 +2698,115 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         
         %initialize
         ListList=[];
-        if strcmp(p.mode, 'TL') %only exporting one frame for timelapses
-           WhFr=p.focalframe; 
-        end
         
         WhCol2=WhCol;
         % put all lists in the same matrix
         for fr=WhFr
             WhCol=WhCol2(WhCol2<=length(p.counts{fr,2}));
             if numel(WhCol)>0
-                ListList(end+1:end+numel(WhCol),1)=WhCol; colm=1;
-                colm=colm+1;ListList(end-numel(WhCol)+1:end,colm)=ones(1,numel(WhCol))*fr;
+                colm=0; %initialize column number
                 for Li=1:sum(FirstL=='L') %over all lists
                     if whichList(Li) %if the list is selected
-                        if strcmp(p.mode, 'TL')
-                            colm=colm+1;ListList(end-numel(WhCol)+1:end,colm)=...
-                                p.UserLists.l.(['List',num2str(Li)]).fr0(WhCol);
+                        colm=colm+1;
+                        if colm==1
+                            whi=size(ListList,1)+(1:numel(WhCol));
                         else
-                            colm=colm+1;ListList(end-numel(WhCol)+1:end,colm)=...
-                                p.UserLists.l.(['List',num2str(Li)]).(['fr',num2str(fr)])(WhCol);
+                            whi=size(ListList,1)-numel(WhCol)+1:size(ListList,1);
+                        end
+                        if strcmp(p.mode, 'TL')
+                            ListList(whi,colm)=p.UserLists.l.(['List',num2str(Li)]).fr0(WhCol);
+                        else
+                            ListList(whi,colm)=p.UserLists.l.(['List',num2str(Li)]).(['fr',num2str(fr)])(WhCol);
                         end
                     end
                 end
             end
         end
-        
         mtrx=array2table(ListList,'VariableNames',titlesL);
     end %export lists
-    function mtrx=makeTableExportPos(WhFr,WhCol)
-        if strcmp(p.mode, 'TL')
-           WhFr=p.focalframe; 
-        end
+    function mtrx=makeTableExportPos(WhFr,WhCol,UM)
         ListList=[];
         for fr=WhFr
             WhCol2=WhCol(WhCol<=length(p.counts{fr,1}));
-            if numel(WhCol2)
-                ListList(end+1:end+numel(WhCol2),1)=WhCol2; colm=1;
-                colm=colm+1;ListList(end-numel(WhCol2)+1:end,colm)=ones(1,numel(WhCol2))*fr;
-                colm=colm+1;ListList(end-numel(WhCol2)+1:end,colm:colm+1)=p.counts{fr,1}(WhCol2,:);
+            if numel(WhCol2) %at least one colony
+                ListList(end+1:end+numel(WhCol2),1:2)=p.counts{fr,1}(WhCol2,:)*UM(fr);
             end
         end
-        mtrx=array2table(ListList,'VariableNames',{'col','frame','X','Y'});
+        mtrx=array2table(ListList,'VariableNames',{'X','Y'});
     end %export positions
-    function mtrx=makeTableExportRT(WhFr,WhCol,WideLong)
+    function mtrx=makeTableExportRT(WhFr,WhCol,UM)
      % exporting the radius depends on conditions:    
         if strcmp(p.mode, 'TL')
-            if strcmp(p.ExportMode, 'um') %micrometer conversion
-                UM=p.umConversion(p.focalframe);
-            else
-                UM=1;
-            end
             if isempty(p.RadMean) || WhCol(end)>size(p.RadMean,1)%the time lapse analysis wasn't run, or not up to date
-                mtrx=table(WhCol',p.counts{p.focalframe}(WhCol)*UM,'VariableNames',{'ColNum',['Rad' p.ExportMode num2str(p.focalframe)]});
-            elseif WideLong
-                % create a list of titles
-                Ni=cell(1,numel(WhFr));i=1;for FRi=WhFr; Ni{i}=['Rad' p.ExportMode 'Fr' num2str(FRi)];i=i+1; end
-                mtrx=[table(WhCol','VariableNames',{'ColNum'}),array2table(p.RadMean(WhCol,WhFr)*UM,'VariableNames',Ni)];
+                mtrx=table(repmat(p.counts{p.focalframe}(WhCol)*UM(p.focalframe),numel(WhFr),1),'VariableNames',{['Rad' p.ExportMode num2str(p.focalframe)]});
             else
-                Col=repmat(WhCol',numel(WhFr),1);
-                Fr=sort(repmat(WhFr',numel(WhCol),1));
                 RT=[];
                 for fri=WhFr
-                    RT=[RT;p.RadMean(WhCol,fri)*UM];
+                    RT=[RT;p.RadMean(WhCol,fri).*UM(WhCol)];
                 end
-                mtrx=table(Col,Fr,RT,'VariableNames',{'ColNum','FrameNum',['Radius' p.ExportMode]});
+                mtrx=table(RT,'VariableNames',{['Radius' p.ExportMode]});
             end
         else %SI mode
-            cN=[];frN=[];rN=[];
+            rN=[];
             for Fri=WhFr
-                if strcmp(p.ExportMode, 'um') %micrometer conversion
-                    UM=p.umConversion(p.focalframe);
-                else
-                    UM=1;
-                end
                 WhCol2=WhCol(WhCol<=length(p.counts{Fri}));
                 if numel(WhCol2)
-                    cN=[cN;WhCol2'];
-                    frN=[frN; ones(length(WhCol2),1)*Fri];
-                    rN=[rN;p.counts{Fri}(WhCol2)*UM];
+                    rN=[rN;p.counts{Fri}(WhCol2)*UM(Fri)];
                 end
             end
-            mtrx=table(cN,frN,rN,'VariableNames',{'ColNum','FrameNum',['Radius' p.ExportMode]});
+            mtrx=table(rN,'VariableNames',{['Radius' p.ExportMode]});
         end
     end %export radius
-    function mtrx=makeTableExportTA(WhFr,WhCol,TLrep)
-        if strcmp(p.mode,'TL')
-            if ~isempty(p.Tdet) && WhCol(end)<=length(p.Tdet)
-                if TLrep %do not repeat the single values
-                    mtrx=table(WhCol',ones(numel(WhCol),1)*p.focalframe,p.Tdet(WhCol),'VariableNames',{'ColNum','FrameNum','Tapp'});
-                else
-                    Col=repmat(WhCol',numel(WhFr),1);
-                    Fr=sort(repmat(WhFr',numel(WhCol),1));
-                    Tapp=repmat(p.Tdet(WhCol),numel(WhFr),1);
-                    mtrx=table(Col,Fr,Tapp,'VariableNames',{'ColNum','FrameNum','Tapp'});
-                end
-            else
-               mtrx=table({'Appearance needs to be calculated prior to export, and values are inexistant or do not match the colony list'});
-            end
-        else
-            if ~isempty(p.estTapp)
-                Col=[];Fr=[];Tapp=[];
+    function mtrx=makeTableExportTA(WhFr,WhCol)
+        if (~isempty(p.Tdet) || ~isempty(p.estTapp)) && WhCol(end)<=length(p.Tdet)
+            if strcmp(p.mode,'TL')
+                Tapp=repmat(p.Tdet(WhCol),numel(WhFr),1);
+                mtrx=table(Tapp,'VariableNames',{'Tapp'});
+            else %in EP mode
+                Tapp=[];
                 for fri=WhFr
                     WhCol2=WhCol(WhCol<=length(p.counts{Fri,2}));
-                    Col=[Col;WhCol2'];
-                    Fr=[Fr, ones(numel(WhCol),1)*fri];
                     Tapp=[Tapp,p.estTapp(WhCol2,fri)];
-                    mtrx=table(Col,Fr,Tapp,'VariableNames',{'ColNum','FrameNum','Tapp'});
+                    mtrx=table(Tapp,'VariableNames',{'Tapp'});
                 end
-            else
-                mtrx=table({'Appearance needs to be calculated prior to export'});
             end
-        end 
+        else %the values of Tapp are not up to date
+            mtrx=exportMSg(WhFr,WhCol,'Appearance time','Tapp');
+        end
+        % TdetRef is exported if exists
+        if ~isempty(p.TdetRef)
+            mtrx=[table(repmat(p.TdetRef,numel(mtrx),1), 'VariableNames',{'TappRef'}),mtrx];
+        end
     end %export appearance time
-    function mtrx=makeTableExportGR(WhFr,WhCol,TLrep)
-        if strcmp(p.mode,'TL')
-            if ~isempty(p.GR) && WhCol(end)<=length(p.GR)
-                if TLrep %do not repeat the single values
-                    mtrx=table(WhCol',ones(numel(WhCol),1)*p.focalframe,p.GR(WhCol),p.TdetFr(WhCol),'VariableNames',{'ColNum','FrameNum','GR','FitTime'});
-                else
-                    Col=repmat(WhCol,numel(WhFr),1);
-                    Fr=sort(repmat(WhFr',numel(WhCol),1));
+    function mtrx=makeTableExportGR(WhFr,WhCol)
+        if ~isempty(p.GR) && WhCol(end)<=length(p.GR) %exists, and right size
+            if strcmp(p.mode,'TL')
                     GR=repmat(p.GR(WhCol),numel(WhFr),1);
                     GRfr=repmat(p.GR(WhCol),numel(WhFr),1);
-                    mtrx=table(Col,Fr,GR,GRfr,'VariableNames',{'ColNum','FrameNum','GR','FitTime'});
-                end
-            else
-                mtrx=table({'Growth rate needs to be calculated prior to export, together with appearance time'});
+                    mtrx=table(GR,GRfr,'VariableNames',{'GR','GRFitTime'});
+            
+        else
+                cs=ismember(p.GR(:,1),WhCol) & ismember(p.GR(:,2),WhFr);
+                mtrx=array2table(p.GR(cs,3:end), 'VariableNames',{'interValGR','GR'});
+    
             end
         else
-            if ~isempty(p.GR)
-                cs=ismember(p.GR(:,1),WhCol) & ismember(p.GR(:,2),WhFr);
-                mtrx=array2table(p.GR(cs,:), 'VariableNames',{'ColNum','FrameNum','interValN','GR'});
-            else
-                 mtrx=table({'Growth rate needs to be calculated prior to export, this can be done only if multiple timepoints are loaded'});
+            mtrx=exportMSg(WhFr,WhCol,'Growth rate','GR');
+        end
+        if ~isempty(p.GRRef)
+            mtrx=[table(repmat(p.GRRef,size(mtrx,1),1), 'VariableNames',{'GRRef'}),mtrx];
+        end
+    end
+    function mtrx=exportMSg(WhFr,WhCol,Name,Varname)
+        %creates a warning matrx so users knows why not exported
+        if strcmp(p.mode, 'TL')
+            mtrx=table(repmat({[Name ' should be calculated prior to export']},numel(WhFr)*numel(WhCol),1),'VariableNames',{Varname});
+        else % in EP mode
+            nblines=0;
+            for fri=WhFr
+                nblines=nblines+sum(WhCol<=length(p.counts{Fri,2}));
             end
+            mtrx=table(repmat({[Name ' need to be calculated prior to export']},nblines,1),'VariableNames',{Varname});
         end
     end
     function T=removeTableNans(T)
@@ -2854,92 +2825,76 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         
     end %replace nans with empty cell
-    function CalcSpatialMetricsD()
+    function CalcSpatialMetricsD(WhFr,WhCol,UM,D,D2,AD)
         % calculates the spatial metrics
         % this will only calculate the ones needed for frames
-        Radiusdetect=p.WhichR;%defining vector with interaction ranges of interest
         
-        WhFr=p.frlist;WhCol=p.colList;
         distances=[];
-        p.D2=[];p.D=[]; p.AD=[];
+        if D2;p.D2=[];end
+        if D;p.D=[];end
+        if AD;p.AD=[];end
+        
         for Fri=WhFr
             WhCol2=WhCol(WhCol<=length(p.counts{Fri,2}));%take only existig colonies
             if numel(WhCol2)>0
-                p.D2(end+1:end+numel(WhCol2),1)=WhCol2;
-                p.D(end+1:end+numel(WhCol2),1)=WhCol2;
-                p.AD(end+1:end+numel(WhCol2),1)=WhCol2;
+                
+                if D2;p.D2(end+1:end+numel(WhCol2),1)=WhCol2; end
+                if D;p.D(end+1:end+numel(WhCol2),1)=WhCol2;end
+                if AD;p.AD(end+1:end+numel(WhCol2),1)=WhCol2;end
                 colm=1;
                 colm=colm+1;
-                p.D2(end-numel(WhCol2)+1:end,colm)=ones(1,numel(WhCol2))*Fri;
-                p.D(end-numel(WhCol2)+1:end,colm)=ones(1,numel(WhCol2))*Fri;
-                p.AD(end-numel(WhCol2)+1:end,colm)=ones(1,numel(WhCol2))*Fri;
-                if ~isempty(p.counts{Fri,1})%only for frames with colonies
-                    if ~strcmp(p.mode,'TL')
-                        distances=squareform(pdist(p.counts{Fri,1}));
-                        distances(distances==0)=NaN;
-                        if strcmp(p.ExportMode, 'um')
-                            distances=distances*p.umConversion(Fri);
-                        end
-                    elseif strcmp(p.mode,'TL') && isempty(distances)
-                        distances=squareform(pdist(p.counts{p.focalframe,1}));
-                        distances(distances==0)=NaN;
-                        if strcmp(p.ExportMode, 'um')
-                            distances=distances*p.umConversion(Fri);
-                        end
-                    end
-                    if strcmp(p.ExportMode, 'um')
-                        Radiusdetect=Radiusdetect*p.umConversion(Fri);
-                    end
-                    for di=Radiusdetect %for each interaction range
-                        % create a truncated distance matrix
-                        distances2=distances;
-                        distances2(distances>di)=nan;
-                        %calculate densities
-                        colm=colm+1;
-                        d2=nansum(1./(distances2.^2));d=nansum(1./(distances2));
-                        p.D2(end-numel(WhCol2)+1:end,colm)=d2(WhCol2); %sum of 1/D^2
-                        p.D(end-numel(WhCol2)+1:end,colm)=d(WhCol2); %sum of 1/D^2
+                if D2;p.D2(end-numel(WhCol2)+1:end,colm)=ones(1,numel(WhCol2))*Fri;end
+                if D;p.D(end-numel(WhCol2)+1:end,colm)=ones(1,numel(WhCol2))*Fri;end
+                if AD;p.AD(end-numel(WhCol2)+1:end,colm)=ones(1,numel(WhCol2))*Fri;end
+                
+                if ~strcmp(p.mode,'TL') || isempty(distances) % only calculate distances once for TL
+                    distances=squareform(pdist(p.counts{Fri,1}));
+                    distances(distances==0)=NaN; %remove distance to itself
+                    distances=distances*UM(Fri); %conversion to micrometer
+                end
+                for di=p.WhichR*UM(Fri) %for each interaction range
+                    % create a truncated distance matrix
+                    distances2=distances;
+                    distances2(distances>di)=nan;
+                    %calculate densities
+                    colm=colm+1;
+                    d2=nansum(1./(distances2.^2));d=nansum(1./(distances2));
+                    if D2;p.D2(end-numel(WhCol2)+1:end,colm)=d2(WhCol2); end%sum of 1/D^2
+                    if D;p.D(end-numel(WhCol2)+1:end,colm)=d(WhCol2); end %sum of 1/D^2
+                    
+                    if AD
+                        % calculate angular diameters, which depends on radii
                         if strcmp(p.mode,'TL') && ~isempty(p.RadMean)
                             if size(distances2,2)==numel(p.RadMean(:,Fri))
-                                if strcmp(p.ExportMode, 'um')
-                                    allAD=nansum(2*atan(p.umConversion(Fri)*p.RadMean(:,Fri)./(2*distances2)),2)';
-                                else
-                                    allAD=nansum(2*atan(p.RadMean(:,Fri)./(2*distances2)),2)';
-                                end
+                                allAD=nansum(2*atan(UM(Fri)*p.RadMean(:,Fri)./(2*distances2)),2)';
                             else
                                 allAD=nan(size(distances2,2),1);
                             end
-                        elseif strcmp(p.mode,'TL')
-                            if strcmp(p.ExportMode, 'um')
-                                allAD=nansum(2*atan(p.umConversion(Fri)*p.counts{p.focalframe,2}./(2*distances2)),2)';%angular diam
-                            else
-                                allAD=nansum(2*atan(p.counts{p.focalframe,2}./(2*distances2)),2)';%angular diam
-                            end        
+                        elseif strcmp(p.mode,'TL') && isempty(p.RadMean)
+                            allAD=nansum(2*atan(UM(Fri)*p.counts{p.focalframe,2}./(2*distances2)),2)';%angular diam from frame
                         else
-                            allAD=nansum(2*atan(p.counts{Fri,2}./(2*distances2)),2)';%angular diam
+                            allAD=nansum(2*atan(UM(Fri)*p.counts{Fri,2}./(2*distances2)),2)';%angular diam
                         end
-                        p.AD(end-numel(WhCol)+1:end,colm)=allAD(WhCol);
+                        p.AD(end-numel(WhCol2)+1:end,colm)=allAD(WhCol2);
                     end
-                end
-            end
-        end
-      
+                end %for each cutoff radius
+            end %If there is a colony
+        end %for each frame       
     end %calculate spatial metrics
-    function ExportColorsData (frames,cols,choices)
+    function ExportColorsData (frames,cols2,choices)
         
         %creates color and shape variables from colonies as asked in
         %whichcalc is a 1x6 vector which values are 1 to calculate the metrics in names:
         whichcalc=choices.TickValues(find(strcmp(choices.Ticklist,'RGBw')):end);
         %names=choices.TickValues(13:end);
-        cols2=cols; %savinf cols data
+        
         %initialize/reset variables
-        %rows=size(p.counts{p.focalframe,2},1);
         p.coloniesColors=struct;p.coloniesColors.Tbl=[];p.coloniesColors.Titles=[];
         
         %  1{'RGBw'} 2{'RGBc'} 3{'GRAYw'} 4{'GRAYc'} 5{'TxtStd'} 6{'TxtEnt'} 7{'Pstd'} 8{'Pl'} 9{'Hrgb'} 10{'Hgray'}
         maketitlsColors(whichcalc,size(Fvar.rgb,3)); %create titles for the matrix
         dispi=0;
-        for fr=sort(frames)
+        for fr=frames
             dispi=dispi+1; 
             if dispi/10==round(dispi/10) 
                 hs.UserMess.String=['Calculating shape/color metrics (' num2str(100*dispi/numel(frames),2) '%)'];drawnow
@@ -2948,13 +2903,13 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             if sum(whichcalc([3:8,10]))>=1 %at least one needs a gray image
                 im=getgray(img); 
             end
-            cols=cols2(cols2<=numel(p.counts{fr,2}));
+            cols=cols2(cols2<=numel(p.counts{fr,2})); %in not TL, this is needed because not all frames have same number of colonies
             for col=cols
                 p.coloniesColors.Tbl(end+1,1)=col; colm=1;
                 colm=colm+1;p.coloniesColors.Tbl(end,colm)=fr; 
                 
                 % measures with mask of whole colony
-                if sum(whichcalc([1,3]))
+                if sum(whichcalc([1,3,5,6]))
                     maskColW=createCirclesMask(im,p.counts{fr,1}(col,:),p.counts{fr,2}(col));
                 end
                 if sum(whichcalc([2,4])) % "colony center" based mask
@@ -2983,7 +2938,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanstd(double(im(maskColW)));
                 end
                 if whichcalc(6) %Entropy Val
-                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=entropy(double(im(maskColW)));
+                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=entropy(im(maskColW));
                 end
                 
                 if sum(whichcalc(7:10)) %affected by other colonies touching
@@ -3109,12 +3064,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
     end %create color title for export
     function HS=getHalosize(Choices,Rcol)
-        if ~isempty(Choices.Nums(4))
+        if ~isempty(Choices.Nums{4})
             HS=Choices.Nums(4);
             HS=str2double(HS{1}); %only one halosize is possible, several will give nan.
-        elseif ~isempty(Choices.Nums(5))
-            HS=(Choices.Nums(5)-1);
-            HS=str2double(HS{1})*Rcol; %same here
+        elseif ~isempty(Choices.Nums{5})
+            HS=Choices.Nums(5);
+            HS=(str2double(HS{1})-1)*Rcol; %same here
         else
             HS=nan;
         end
@@ -4663,6 +4618,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
     end%check the timelapse manually
     function CalcRadKymo2_Callback(~,~)
 %         initializeedges
+    save_options_Callback;
     hs.UserMess.String='Please wait...';drawnow
     p.showplot=0;
     p.colList=1:size(Kymo.Kymo,1);
@@ -5662,10 +5618,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             p.minRadN=round(minimumR)-1;
             p.maxRadN=round(maximumR)+1;
             hs.UserMess.String=['Minimum radius: ', num2str(p.minRadN), 'px; maximum radius: ', num2str(p.maxRadN), 'px'];drawnow
-            try
-                close_options_Callback;
-            catch
-            end
+            
             if ~p.disableSave
                 saveall(p.dirS);
             end
@@ -5987,6 +5940,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             p.counts{p.i,2}=[];
         end
         warning('on','images:imfindcircles:warnForLargeRadiusRange')
+        pause(0.0001)
         hs.UserMess.String=['calculated for image Nr.' num2str(p.i)];drawnow
     end %create clean binary images
     function BW=AdaptiveBin(i1)
@@ -6748,8 +6702,11 @@ p.showplot=0; waittime=1;
         [~,xi,yi]=roipoly(); %user inputs a polygon
         
         %remove for current frame
+        try %because the user can start polygon function and not do anything...
         in=inpolygon(p.centers(:,1),p.centers(:,2),xi,yi); %all cells in polygon
-        
+        catch
+            hs.UserMess.String='';drawnow
+        end
         if InOut
             in=~in;
         end
@@ -8522,8 +8479,6 @@ p.showplot=0; waittime=1;
         p.TLimgenhance=0;
         tic
         StartTL;%function call for the start
-        toc
-
         
     end% track radii
     function StartTL(~,~)
@@ -9475,7 +9430,7 @@ p.showplot=0; waittime=1;
             fontSize=10;
             try
             if (isfield(k, 'fig1') && ishandle(k.fig1))
-               figure;
+               k.steps=figure;
 %                 [k.fig, ~] = tight_subplot(6,3,[.05 .01],[.1 .1],[.01 .01]);
             end
             catch
@@ -9723,12 +9678,13 @@ p.showplot=0; waittime=1;
         colList1=round(str2num(answer{1,1})); %#ok<ST2NM>
         OK=setpColList(colList1); %this function sets variable p.ColList
         if OK==0; return; end %there was an error in the list
-        
+        k.steps=figure;close(k.steps);
         k.fig1=figure('Name','Kymograph correction',...
                     'Numbertitle','off',...
                     'units','normalized','outerposition',[0 0.03 1*Fvar.figscale 0.97],...
                     'Color',[0.9 0.9 .9],...
                     'Toolbar','none');
+                
 
                 k.gray=[0.7 0.7 0.7];
         k.main=uix.HBoxFlex('Parent', k.fig1,'Padding',0, 'Spacing', 10); % whole box, separed into two units: 1) TopLayer and 2) BottomLayer
@@ -9900,12 +9856,22 @@ p.showplot=0; waittime=1;
                 else
                     k.addlist.String='No active list';
                 end
-                while k.back.Value==0&&k.ok.Value==0&&k.exclude.Value==0&& ... 
-                k.addlist.Value==0&&k.abort.Value==0&&k.save.Value==0
-                pause(0.001)
+                
                 if ~ishandle(k.fig1);return;end
-                pause(0.001)
+                while k.back.Value==0&&k.ok.Value==0&&k.exclude.Value==0&& ... 
+                    k.addlist.Value==0&&k.abort.Value==0&&k.save.Value==0
+                    pause(0.001)
+                    if ~ishandle(k.fig1);return;end
+                    pause(0.001)
+                    if ~ishandle(k.steps)
+                        if p.kymomode(whichCol)==1
+                            uicontrol(k.globalsldr)
+                        elseif p.kymomode(whichCol)==2
+                            uicontrol(k.canhi)
+                        end
+                    end
                 end
+                
                 if k.ok.Value
                     correct=1;
                     ix=ix+1;
@@ -9924,6 +9890,7 @@ p.showplot=0; waittime=1;
                 if k.addlist.Value && ~isnan(activeList) && activeList<-Fvar.numNonUserList
                     L=readList(-activeList, p.i);
                     L(whichCol)=~L(whichCol);
+                    chngList(-activeList, p.i, L);
                     if L(whichCol)
                        set(k.changes, 'String', 'Colony added to list'); 
                     else
@@ -10115,7 +10082,6 @@ p.showplot=0; waittime=1;
             set(k.changes, 'String', ['Line closing angle changed to ', num2str(p.anglelineclose(whichCol))]);
         end
         
-
         function drawradkymocor(~,~)
             if p.kymomode(whichCol)==1
                 CalcRadKymo1(whichCol);
@@ -10134,14 +10100,14 @@ p.showplot=0; waittime=1;
     function TappCalc_Callback(~,~)
         f=gcf;
         TappCalc;
-        f1=gcf;
         set(0, 'currentfigure', f);
         if ~p.disableSave
             saveall(p.dirS);
         end
         refresh(1);
         ProgressUpdate
-        figure(f1)
+        figure(hs.tappf1)
+        hs.tappf1=[];
     end %appearance time determination button
     function TappCalc(~,~)
         if ~isstruct(b)
@@ -10201,7 +10167,7 @@ p.showplot=0; waittime=1;
         Check1=p.RadMeanUm>=p.RdetThreshUm;%for each RadMean entry: =1 if bigger than RdetThreshUm
         
         %         if ~b.runningBatch
-        f1=figure; %#ok<NASGU>
+        hs.tappf1=figure; 
         hold on
         %         end
         
@@ -11248,7 +11214,7 @@ p.showplot=0; waittime=1;
                 set(hs.AutoCenter, 'BackgroundColor', hs.btnCol.green1, 'Enable', 'on');
                 set(hs.ManualCenter, 'BackgroundColor', hs.btnCol.green1, 'Enable', 'on');
                 set(hs.closecenterbutton, 'BackgroundColor', hs.btnCol.green1, 'Enable', 'on');
-                set(hs.registration,'Enable', 'on');
+                set(hs.registration,'Enable', 'on', 'Value', p.REGstatus);
             else
                set(hs.SizeDist, 'BackgroundColor', hs.btnCol.green1, 'Enable', 'on');
                set(hs.multiEP, 'BackgroundColor', hs.btnCol.green1, 'Enable', 'on');
@@ -11351,7 +11317,7 @@ p.showplot=0; waittime=1;
             OK=1;
         elseif sum(FrList<0) || sum(FrList>length(p.l)) || sum(isnan(FrList))
             p.frlist=[];
-            waitfor(errordlg('The frame input was incorrect. Please try again.'))
+            waitfor(errordlg('The frame input was incorrect.'))
         else
             p.frlist=FrList;
             OK=1;
@@ -11385,6 +11351,31 @@ p.showplot=0; waittime=1;
         end
         p.colList=sort(unique(p.colList)); %sorting the list and removing duplicates
         OK=1;
+    end %set list of colonies
+    function [OK,Colonies]=setpColList2(colList1,Frames)
+        % this function is used to generate a list similar to setpColList2,
+        % but has one specific output on EP mode
+        
+        if strcmp(p.mode,'TL')
+            OK=setpColList(colList1); 
+            if ~OK % in case the list doesn't work, exporting all colonies
+                OK=setpColList(0);
+            end
+        else % in EP mode, Colonies contains the biggest posible ensemble assuming 
+                biggest=0;
+                for i=Frames %over all frames
+                    biggest=max(biggest,numel(p.counts{1,2}));
+                end
+            oldpi=p.i;
+            p.i=biggest; %setting p.i to use setpColList
+            OK=setpColList(colList1); 
+            p.i=oldpi;
+            if ~OK % in case the list doesn't work, exporting all colonies
+                OK=setpColList(0);
+            end
+        end
+        Colonies=p.colList;
+       
     end %set list of colonies
     function GetColAndTime(prompt, defCol, defStartF)
         %let the user specify which colonies and which frames he wants to
@@ -12815,10 +12806,10 @@ end %this function calculates the bounded voronoi tesselation
         % Check Inputs
         if nargin == 0
             how_many = -1;
-            b = [];
+            b1 = [];
         else
             how_many = arg1;
-            b = [];
+            b1 = [];
             if  ~isPositiveScalarIntegerNumber(how_many)
                 error(message('MATLAB:ginput:NeedPositiveInt'))
             end
@@ -12920,7 +12911,7 @@ end %this function calculates the bounded voronoi tesselation
                 
                 out1 = [out1;pt(1,1)]; 
                 y = [y;pt(1,2)];
-                b = [b;button]; 
+                b1 = [b1;button]; 
             end
         end
         
@@ -12930,7 +12921,7 @@ end %this function calculates the bounded voronoi tesselation
         if nargout > 1
             out2 = y;
             if nargout > 2
-                out3 = b;
+                out3 = b1;
             end
         else
             out1 = [out1 y];
