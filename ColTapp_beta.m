@@ -81,6 +81,22 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             
         end
         
+        if sum(strcmp({v.Name},'Image Processing Toolbox'))==0
+            quest=questdlg('The necesarry "Image Processing Toolbox" is missing. To install it, you need to re-run the MATLAB installer and select the toolbox. Do you want to open the download-page?',...
+                'Toolbox download', 'Yes','No','Yes');
+            stp=1;
+            switch quest
+                case 'Yes'
+                    url='https://www.mathworks.com/downloads/';
+                    web(url,'-browser');
+                    return
+                case 'No'
+                    return
+                case ''
+                    return
+            end
+        end
+        
         %for some things, we need the curve fitting toolbox, check that as well
         if sum(strcmp({v.Name},'Curve Fitting Toolbox'))==0
             quest=questdlg(['The "Curve Fitting Toolbox" is missing. It is needed for detecting the radius of transition and growth rate for timelapse analysis.',...
@@ -145,9 +161,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
     end%check if necessary toolboxes are missing
     function Layoutcomponents
         %color values for the different button types
-        hs.btnCol.gray=[0.5 0.5 0.5];
-        hs.btnCol.green1=[0 0.6 0];
-        hs.btnCol.green2=[0 0.9 0];
+        hs.btnCol.gray=[0.7 0.7 0.7];
+%         hs.btnCol.green1=[0 0.6 0];
+%         hs.btnCol.green2=[0 0.9 0];$
+        hs.btnCol.green1=[0.4490    0.8588    0.5922]; %main buttons
+        hs.btnCol.green2=[0.5071    0.9216    0.5078]; %load etc buttons
+        
             
         % Cutting main units
         hs.main=uix.VBoxFlex('Parent', hs.f,'Padding',0, 'Spacing', 10); % whole box, separed into two units: 1) TopLayer and 2) BottomLayer
@@ -1969,6 +1988,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             else%or normal
                 Fvar.im=imshow((Fvar.rgb),'InitialMagnification', 40);
             end
+            
         end
     end%fnc called by refresh for the loading and display of image.
 
@@ -1978,11 +1998,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             if p.AA(p.i)==1%if it is a circle
                 if ~isempty(p.AAr(p.i)) && ~isnan(p.AAr(p.i))
                     hold on;
-                    %if(~isempty(p.shift))%%still need to check if it works
-                    %viscircles(p.AAc(p.i,:)+p.shift(p.i),p.AAr(p.i), 'Color','b');
-                    %else
-                    viscircles(p.AAc(p.i,:),p.AAr(p.i), 'Color','b');
-                    %end
+                        viscircles(p.AAc(p.i,:),p.AAr(p.i), 'Color','b');
+                  
                     hold off;
                  end
             elseif p.AA(p.i)==2 %or a polygon
@@ -2220,9 +2237,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         else
             cols=[];frs=[];
             for Fri=Frames
-                WhCol2=Colonies(Colonies<=length(p.Counts{Fri,2}));
+                WhCol2=Colonies(Colonies<=length(p.counts{Fri,2}));
                 cols=[cols;WhCol2'];
-                frs=[frs;ones(numel(Colonies),1)*Fri];
+                frs=[frs;ones(numel(WhCol2),1)*Fri];
             end
         end
         mtrxAll=table(cols,frs, 'VariableNames',{'Colonies','Frames'});
@@ -2742,30 +2759,55 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             else
                 RT=[];
                 for fri=WhFr
-                    RT=[RT;p.RadMean(WhCol,fri).*UM(WhCol)];
+                    RT=[RT;p.RadMean(WhCol,fri).*UM(fri)];
                 end
                 mtrx=table(RT,'VariableNames',{['Radius' p.ExportMode]});
             end
         else %SI mode
             rN=[];
+            
             for Fri=WhFr
+                
                 WhCol2=WhCol(WhCol<=length(p.counts{Fri}));
-                if numel(WhCol2)
-                    rN=[rN;p.counts{Fri}(WhCol2)*UM(Fri)];
+                if isfield(p, 'counts1')
+                    if numel(WhCol2)
+                        tmp=[];
+                        for mui=1:length(p.multiEPdirs)
+                            tmp(:,mui)=p.(['counts',num2str(mui)]){Fri,2}(WhCol2)*p.(['umConversion',num2str(mui)]);
+                        end
+                        
+                        rN=[rN;tmp];
+                    end
+                else
+                    if numel(WhCol2)
+                        rN=[rN;p.counts{Fri,2}(WhCol2)*UM(Fri)];
+                    end
                 end
+                
             end
-            mtrx=table(rN,'VariableNames',{['Radius' p.ExportMode]});
+            
+            if isfield(p, 'counts1')
+                radname={};
+                for mui=1:length(p.multiEPdirs)
+                    radname{mui}=['Radius_folder',num2str(mui),'_', p.ExportMode];
+                end
+                mtrx=array2table(rN,'VariableNames',radname);
+            else
+                radname={['Radius' p.ExportMode]};
+                mtrx=table(rN,'VariableNames',radname);
+            end
+            
         end
     end %export radius
     function mtrx=makeTableExportTA(WhFr,WhCol)
-        if (~isempty(p.Tdet) || ~isempty(p.estTapp)) && WhCol(end)<=length(p.Tdet)
+        if (~isempty(p.Tdet) || ~isempty(p.estTapp)) && (WhCol(end)<=length(p.Tdet) || WhCol(end)<=length(p.estTapp))
             if strcmp(p.mode,'TL')
                 Tapp=repmat(p.Tdet(WhCol),numel(WhFr),1);
                 mtrx=table(Tapp,'VariableNames',{'Tapp'});
             else %in EP mode
                 Tapp=[];
                 for fri=WhFr
-                    WhCol2=WhCol(WhCol<=length(p.counts{Fri,2}));
+                    WhCol2=WhCol(WhCol<=length(p.counts{fri,2}));
                     Tapp=[Tapp,p.estTapp(WhCol2,fri)];
                     mtrx=table(Tapp,'VariableNames',{'Tapp'});
                 end
@@ -2787,7 +2829,10 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             
         else
                 cs=ismember(p.GR(:,1),WhCol) & ismember(p.GR(:,2),WhFr);
-                mtrx=array2table(p.GR(cs,3:end), 'VariableNames',{'interValGR','GR'});
+                for gri=1:length(p.timepoints)-1
+                    GRnames{gri}=['GR:', num2str(p.timepoints(gri)), 'h-', num2str(p.timepoints(gri+1)), 'h'];
+                end
+                mtrx=array2table(p.GR(cs,3:end), 'VariableNames',GRnames);
     
             end
         else
@@ -2804,7 +2849,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         else % in EP mode
             nblines=0;
             for fri=WhFr
-                nblines=nblines+sum(WhCol<=length(p.counts{Fri,2}));
+                nblines=nblines+sum(WhCol<=length(p.counts{fri,2}));
             end
             mtrx=table(repmat({[Name ' need to be calculated prior to export']},nblines,1),'VariableNames',{Varname});
         end
@@ -2910,10 +2955,10 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 
                 % measures with mask of whole colony
                 if sum(whichcalc([1,3,5,6]))
-                    maskColW=createCirclesMask(im,p.counts{fr,1}(col,:),p.counts{fr,2}(col));
+                    maskColW=createCirclesMask(img,p.counts{fr,1}(col,:),p.counts{fr,2}(col));
                 end
                 if sum(whichcalc([2,4])) % "colony center" based mask
-                    maskColC=createCirclesMask(im,p.counts{fr,1}(col,:),5);
+                    maskColC=createCirclesMask(img,p.counts{fr,1}(col,:),5);
                 end
                 
                 if whichcalc(1) %MeanColVal
@@ -2967,8 +3012,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     center=[round(p.counts{fr,1}(col,2)),round(p.counts{fr,1}(col,1))]; %contains the centers of colonies
                     Zone=ZoneDef(center,col,im,fr);
                     mini_im=im(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone,:); % 3 colors
+                    %mini_im2=img(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone,: %used to extract images
                     %mini_im=getSmallImage(col,im); %didn't work in that context
-                    
+                   
                     binim=imbinarize(mini_im); edgim=edge(binim);
                     
                     % create a bigger mask than the colony to remove potential other objects, remove edges
@@ -3013,6 +3059,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(imH(maskCol==1));
                 end
             end
+           
+       
         end
     end %export color
     function maketitlsColors(whichcalc,dim)
@@ -7189,6 +7237,7 @@ p.showplot=0; waittime=1;
         refresh(1)
     end %overlay toggle
     function ChangeOverlayFolder_callBack(~,~)
+        if isempty(hs.overlayselect.Value);return;end
         temp2=hs.overlayselect.String{hs.overlayselect.Value};
         for i=1:length(p.multiEPdirs)
            spos=strfind(p.multiEPdirs(i), filesep);
@@ -7383,6 +7432,9 @@ p.showplot=0; waittime=1;
                     mismatchfolder=[mismatchfolder, p.multiEPdirs(i)];
                     continue
                 end
+                if size(p.(['counts',num2str(refolder)]){i2,1},1)==0
+                    continue                    
+                end
                 dst=pdist2(p.(['counts',num2str(refolder)]){i2,1}, p.(['counts',num2str(i)]){i2,1});
                 val=nan(size(dst,1),1);
                 idx=nan(size(dst,1),1);
@@ -7458,6 +7510,9 @@ p.showplot=0; waittime=1;
         p.flist=flist;
         for frms=flist
             p.i=frms;
+            if size(p.counts{frms,1},1)==0
+                continue
+            end
 %         get grayscale image
         
 %         i2 -> get 2 points for each image
@@ -7832,14 +7887,14 @@ p.showplot=0; waittime=1;
         p.counts(:,2)=p.counts(p.focalframe,2);
         p.counts_unregistered=p.counts;
         if strcmp(p.imgmode, 'rgb')
-            recref= rgb2gray(imcrop(Fvar.rgb,position));
+            recref= customcol2gray(imcrop(Fvar.rgb,position));
         else
             recref=imcrop(Fvar.rgb,position);
         end
         croppedlist=cell(1,length(p.l));
         for i=1:length(p.l)%get each image
             if strcmp(p.imgmode, 'rgb')
-                croppedlist{i}=rgb2gray(imcrop(imread([p.dir, filesep,p.l(i).name]),position));%and crop the area (rectangle) of interest
+                croppedlist{i}=customcol2gray(imcrop(imread([p.dir, filesep,p.l(i).name]),position));%and crop the area (rectangle) of interest
             else
                 croppedlist{i}=(imcrop(imread([p.dir, filesep,p.l(i).name]),position));%and crop the area (rectangle) of interest
             end
@@ -7943,7 +7998,11 @@ p.showplot=0; waittime=1;
             if ~isempty(Fvar.background) && ~Fvar.imgenhanced
                 EnhanceImage_Callback
             end
-            img=customcol2gray(Fvar.rgb);
+            if ~ismatrix(Fvar.rgb)
+                img=customcol2gray(Fvar.rgb);
+            else
+                img=Fvar.rgb;
+            end
             
             hs.UserMess.String='Center correction ongoing...';drawnow
             
@@ -8200,8 +8259,8 @@ p.showplot=0; waittime=1;
                 Zone=ZoneDef(center,whichCol,img,p.i);
                 try
                     rgbcol=img(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone,:);
-                    if strcmp(p.imgmode, 'rgb') && Fvar.imgenhanced
-                        rgbcolG=img(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone,2);
+                    if ~ismatrix(rgbcol)
+                        rgbcolG=customcol2gray(img(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone,:));
                     else
                         rgbcolG=rgbcol;
                     end
@@ -9570,7 +9629,7 @@ p.showplot=0; waittime=1;
     %reinitialize kymograph list
     chngList(2,0,false(size(p.RadMean,1),1))
     L=readList(2,0);
-    
+    failed=L;
     redo=0;
     hs.UserMess.String='Please wait...';drawnow
     for rep=1:2
@@ -9619,11 +9678,16 @@ p.showplot=0; waittime=1;
             'Yes','No','Yes');
         switch quest
             case 'Yes'
+                L=readList(2,0);
                 for whichCol=p.colList(L)
+                    try
                     CalcRadKymo2(whichCol)
+                    catch
+                        L(whichCol)=1;
+                        failed(whichCol)=1;
+                    end
                     redo=1;
-                    L=readList(2,0);
-                end
+                end       
             case 'No'
             case ''
         end
@@ -9639,6 +9703,9 @@ p.showplot=0; waittime=1;
     end
     hs.UserMess.String=['List -2: ', num2str(sum(L)), ' out of ' num2str(length(L)), ' colonies need correction'];drawnow
     disableGUI(0);%disable the GUI
+    if sum(failed)>0
+        msgbox(['Something is wrong with the kymographs of colonies ', num2str(p.colList(failed)),'. Please re-run time-lapse analysis for these'],'Corrupt kymographs')
+    end
     end %find failed kymographs
     function CorrectThresh_Callback(~,~)
         Kymolength=size(Kymo.Kymo,1);
@@ -11364,10 +11431,14 @@ p.showplot=0; waittime=1;
         else % in EP mode, Colonies contains the biggest posible ensemble assuming 
                 biggest=0;
                 for i=Frames %over all frames
-                    biggest=max(biggest,numel(p.counts{1,2}));
+                    if numel(p.counts{i,2})>biggest
+                        biggest=numel(p.counts{i,2});
+                        biggesti=i;
+                    end
+                    %[biggest,ind]=max(biggest,numel(p.counts{i,2}));
                 end
             oldpi=p.i;
-            p.i=biggest; %setting p.i to use setpColList
+            p.i=biggesti; %setting p.i to use setpColList
             OK=setpColList(colList1); 
             p.i=oldpi;
             if ~OK % in case the list doesn't work, exporting all colonies
