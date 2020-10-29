@@ -304,6 +304,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         hs.Void4=uix.Empty('Parent', hs.TimelapseTabBox);
         hs.TappCalc=uicontrol('Parent',hs.TimelapseTabBox, 'String', 'Apearance time determination', 'Callback', @TappCalc_Callback,'FontSize',14,'BackgroundColor', hs.btnCol.gray, 'Enable', 'inactive');
         hs.Void4=uix.Empty('Parent', hs.TimelapseTabBox);
+        hs.IntensityTL=uicontrol('Parent',hs.TimelapseTabBox, 'String', 'Intensity time-lapse', 'Callback', @Intensity_TL_Callback,'FontSize',14,'BackgroundColor', hs.btnCol.gray, 'Enable', 'inactive');
+        
          
         %Visualize tab
         hs.ResultsTabBox=uix.VBox('Parent', hs.ResultsTab,'Padding', 20);
@@ -322,7 +324,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         hs.LeftPan.Heights=[-1 ,20,-15];
         hs.DetectTabBox.Heights=[-1 -0.2 -1 -1 -1 -1 -1 -1 -1 -1.5 -1 -1 -1 -1 -1 -1.5 -1 -1 -1];
         hs.SITabBox.Heights=[-1 -1 -1 -2 -1 -1 -1 -1 -2 -1 -2 -1 -2];
-        hs.TimelapseTabBox.Heights=[-1 -2 -1 -1 -1 -1 -1 -1 -2 -1 -2 -1 -2];
+        hs.TimelapseTabBox.Heights=[-1 -2 -1 -1 -1 -1 -1 -1 -2 -1 -2 -1 -2 -1];
         hs.ResultsTabBox.Heights=[-1 -1 -1 -1 -1 -12];   
     end %make GUI
     function mouseOvers
@@ -559,7 +561,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             initialize_gui;
             errorTrck=1;
         end
-        hs.UserMess.String='Please wait, data is loading...';drawnow
+        hs.UserMess.String='Please wait, data is loading...';customdrawnow
         
         p.dir=dirUser; %update p.dir
         p.dirS=p.dir; %the file saving is initialy done on the same folder
@@ -571,12 +573,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 Layoutcomponents;
                 clear p; clear colonies;
                 % Initialise variables
-                hs.UserMessNumCol.String= ''; drawnow
+                hs.UserMessNumCol.String= ''; customdrawnow
                 delete(hs.fig);
                 hs.fig=axes('Parent', hs.FigPan, 'Color', [0.9 0.9 0.8], 'Position', [0 0 1 1]); %creating axes
                 p.dir=dirUser; %update p.dir
                 p.dirS=p.dir; %the file saving is initialy done on the same folder
-                hs.UserMess.String='Loading failed';drawnow
+                hs.UserMess.String='Loading failed';customdrawnow
                 return
             else
                 p.dir=dirTemp;
@@ -584,7 +586,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 chngDir
                 refresh(1);
                 ProgressUpdate;
-                hs.UserMess.String='Loading failed';drawnow
+                hs.UserMess.String='Loading failed';customdrawnow
                 return
             end
         
@@ -594,11 +596,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 chngDir
                 refresh(1);
                 ProgressUpdate;
-                hs.UserMess.String='Loading failed';drawnow
+                hs.UserMess.String='Loading failed';customdrawnow
                 return
         else
-            hs.UserMessNumCol.String= ''; drawnow
-            hs.UserMess.String='Setting up GUI...';drawnow
+            hs.UserMessNumCol.String= ''; customdrawnow
+            hs.UserMess.String='Setting up GUI...';customdrawnow
             delete(hs.fig);
             hs.fig=axes('Parent', hs.FigPan, 'Color', [0.9 0.9 0.8], 'Position', [0 0 1 1]); %creating axes
         end
@@ -627,8 +629,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         
         
-        txtMsg= ''; text(0.25, 0.5, txtMsg,'Fontsize', 14);drawnow
-        axes(hs.Progress1); fill([0 0 0 0],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none');drawnow
+        txtMsg= ''; text(0.25, 0.5, txtMsg,'Fontsize', 14);customdrawnow
+        axes(hs.Progress1); fill([0 0 0 0],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none');customdrawnow
         if p.i<1 || p.i>length(p.l)
             p.i=1;
         end
@@ -721,7 +723,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         if ~p.disableSave
             saveall(p.dirS);
         end
-        hs.UserMess.String='Loading finished';drawnow
+        hs.UserMess.String='Loading finished';customdrawnow
     end%load folder
     function E=writeperm(dirUser)
         [fid,errmsg] = fopen([dirUser,filesep,'testColTapp.m'],'a');
@@ -787,7 +789,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                         catch
                             if b.batchmode==0
                                 errordlg(['The date of the file ', files(ii).name, ' in the folder you try to load cannot be read. Please delete that and try again.']);
-                                hs.UserMess.String='Error. Loading cancelled.'; drawnow
+                                hs.UserMess.String='Error. Loading cancelled.'; customdrawnow
                                 return ;
                             else
                                 b.summary(b.TheOneRunning)=0;
@@ -804,7 +806,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             catch %somehow files can become corrupt, notify the user which one and cancel loading
                 if b.batchmode==0
                     errordlg(['The file called: ', files(ind).name, ' in the folder you try to load is corrupt. Please delete that and try again.']);
-                    hs.UserMess.String='Error. Loading cancelled.'; drawnow
+                    hs.UserMess.String='Error. Loading cancelled.'; customdrawnow
                     return
                 else
                     b.summary(b.TheOneRunning)=0;
@@ -966,7 +968,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                             catch
                                 if b.batchmode==0
                                     errordlg(['The date of the file ', files(ii).name, ' in the folder you try to load cannot be read. Please delete that and try again.']);
-                                    hs.UserMess.String='Error. Loading cancelled.'; drawnow
+                                    hs.UserMess.String='Error. Loading cancelled.'; customdrawnow
                                     return ;
                                 end
                             end
@@ -980,7 +982,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 catch %somehow files can become corrupt, notify the user which one and cancel loading
                     if b.batchmode==0
                         errordlg(['The file called: ', files(ind).name, ' in the folder you try to load is corrupt. Please delete that and try again.']);
-                        hs.UserMess.String='Error. Loading cancelled.'; drawnow
+                        hs.UserMess.String='Error. Loading cancelled.'; customdrawnow
                         return
                     end
                 end
@@ -1071,7 +1073,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                                 if b.batchmode==0
                                     errordlg(['The date of the file ', files(ii).name,...
                                         ' in the folder you try to load cannot be read. Please delete that and try again.']);
-                                    hs.UserMess.String='Error. Loading cancelled.'; drawnow
+                                    hs.UserMess.String='Error. Loading cancelled.'; customdrawnow
                                     return ;
                                 end
                             end
@@ -1086,7 +1088,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     if b.batchmode==0
                         errordlg(['The file called: ', files(ind).name,...
                             ' in the folder you try to load is corrupt. Please delete that and try again.']);
-                        hs.UserMess.String='Error. Loading cancelled.'; drawnow
+                        hs.UserMess.String='Error. Loading cancelled.'; customdrawnow
                         return
                     end
                 end
@@ -1280,7 +1282,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             end
         end
         if ~isfield (p, 'csvdelimter')
-            p.csvdelimiter=2;
+            p.csvdelimiter=1;
         end
         if ~isfield(p, 'savebackups')
             p.savebackups=1;
@@ -1439,7 +1441,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                         addT=nan;
                     end
                     if sum(isnan(addT)) || isempty(addT) || length(addT)>1 || sum(addT<0) || addT<1 %automatic detection didn't work
-                        hs.UserMess.String='Time interval not detected. Set to default 10min.';drawnow
+                        hs.UserMess.String='Time interval not detected. Set to default 10min.';customdrawnow
                         addT=10;
                     end
                     
@@ -1616,15 +1618,15 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         try %displaying the colonies per frame if in single mode or for each frame the same number if in TL mode
             if strcmp(p.mode, 'single') && ~isempty(p.counts{p.i})
-                hs.UserMessNumCol.String= [num2str(length(p.counts{p.i,2})) ' colonies on image']; drawnow
+                hs.UserMessNumCol.String= [num2str(length(p.counts{p.i,2})) ' colonies on image']; customdrawnow
             elseif strcmp(p.mode, 'single') && isempty(p.counts{p.i})
-                hs.UserMessNumCol.String= ''; drawnow
+                hs.UserMessNumCol.String= ''; customdrawnow
             elseif strcmp(p.mode, 'TL') && ~isempty(p.counts{p.i})
-                hs.UserMessNumCol.String= [num2str(length(p.counts{p.i,2})) ' colonies on timelapse']; drawnow
+                hs.UserMessNumCol.String= [num2str(length(p.counts{p.i,2})) ' colonies on timelapse']; customdrawnow
             elseif strcmp(p.mode, 'TL') && ~isempty(p.counts{p.focalframe})
-                hs.UserMessNumCol.String= [num2str(length(p.counts{p.focalframe,2})) ' colonies on timelapse']; drawnow
+                hs.UserMessNumCol.String= [num2str(length(p.counts{p.focalframe,2})) ' colonies on timelapse']; customdrawnow
             elseif strcmp(p.mode, 'TL') && isempty(p.counts{p.focalframe})
-                hs.UserMessNumCol.String= ''; drawnow
+                hs.UserMessNumCol.String= ''; customdrawnow
             end
         catch %do nothing
         end
@@ -1647,10 +1649,10 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 end
             end
         end
-        set(hs.ListSelect, 'String',p.UserLists.listOptions);drawnow;
+        set(hs.ListSelect, 'String',p.UserLists.listOptions);customdrawnow;
         if isfield(hs,'ListSelect2') 
             if isvalid(hs.ListSelect2) %this is in the options menu, it should not enter
-                set(hs.ListSelect2, 'String',p.UserLists.listOptions);drawnow;
+                set(hs.ListSelect2, 'String',p.UserLists.listOptions);customdrawnow;
             end
         end
         set(hs.f, 'MenuBar', 'none', 'NumberTitle', 'off','HandleVisibility','on', ...
@@ -1769,7 +1771,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 p.multiEPdirs=p.multiEPdirs(~strcmp(p.multiEPdirs, p.dirOverlay));
                 p.lOverlay=[];p.dirOverlay=[];
                 p.overlayIMGstatus=0;
-                hs.UserMess.String='No images in folder or folder missing';drawnow
+                hs.UserMess.String='No images in folder or folder missing';customdrawnow
                 setoverlayfolders;
                 hs.overlay.Value=p.overlayIMGstatus;%reset the overlay toggle
                 return
@@ -1780,7 +1782,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 p.multiEPdirs=p.multiEPdirs(~strcmp(p.multiEPdirs, p.dirOverlay));
                 p.lOverlay=[];p.dirOverlay=[];
                 p.overlayIMGstatus=0;
-                hs.UserMess.String='No images in folder or folder missing';drawnow
+                hs.UserMess.String='No images in folder or folder missing';customdrawnow
                 setoverlayfolders;
                 hs.overlay.Value=p.overlayIMGstatus;%reset the overlay toggle
                 return
@@ -1881,7 +1883,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 return
         end
 
-        if sum(size(p.l))==0; hs.UserMess.String='No images loaded';drawnow; return; end %the list doesn't exist
+        if sum(size(p.l))==0; hs.UserMess.String='No images loaded';customdrawnow; return; end %the list doesn't exist
         p.showImage=1;
 %         i=str2double(get(hs.setframeinput, 'String')); %get the string in the field
         
@@ -1889,12 +1891,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         
         if sum(i>0) && sum(i<length(p.l)+1) && sum(p.i~=i) && length(i)==1 %checking it is inside range
             set_frame(i);
-            hs.UserMess.String='';drawnow
+            hs.UserMess.String='';customdrawnow
         elseif sum(p.i==i)
-            hs.UserMess.String='';drawnow
+            hs.UserMess.String='';customdrawnow
             return
         else
-            hs.UserMess.String='Input number out of range or not a number';drawnow
+            hs.UserMess.String='Input number out of range or not a number';customdrawnow
         end
     end %set frame by textbox
     function set_frame(i)
@@ -2165,12 +2167,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             if ~isempty(a)  % list is not empty
                 viscircles(p.counts{p.i,1}(a,:),p.counts{p.i,2}(a,:)*p.apR,'Color',[0.75 0.1 0.8]); %plot the colony circle
             else 
-                hs.UserMess.String='The list is empty'; drawnow
+                hs.UserMess.String='The list is empty'; customdrawnow
             end
         else
             p.showlist=0;
             set (hs.ShowList, 'String', 'Show')
-            hs.UserMess.String='No list selected'; drawnow
+            hs.UserMess.String='No list selected'; customdrawnow
         end
     end %highlight colonies in list
     function a=activeList()
@@ -2194,12 +2196,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         Choices=ExportGUI(); %Choices contains a list of user Choices
         
         if isempty(Choices)
-            hs.UserMess.String='No data exported';drawnow
+            hs.UserMess.String='No data exported';customdrawnow
             disableGUI(0);
             return 
         end %no export wanted, or cancelled
         if isempty(fieldnames(Choices))
-            hs.UserMess.String='No data exported';drawnow
+            hs.UserMess.String='No data exported';customdrawnow
             disableGUI(0);
             return 
         end
@@ -2226,7 +2228,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         D2=Choices.TickValues(strcmp(Choices.Ticklist,'D2'));
         AD=Choices.TickValues(strcmp(Choices.Ticklist,'D2'));
         if D||D2||AD % at least one spatial metric is asked for
-                hs.UserMess.String='Calculating distance metrics...';drawnow
+                hs.UserMess.String='Calculating distance metrics...';customdrawnow
                 CalcSpatialMetricsD(Frames,Colonies,UM,D,D2,AD); %calculated and stored in p.D, etc
         end
         
@@ -2260,9 +2262,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             FO=checkFile(FileName(1:end-4),{'_dat.csv'});if FO;return; end
             writetable(mtrxAll, [FileName(1:end-4),'_dat.csv'], 'Delimiter',Fvar.csvdelimiterssymbol{p.csvdelimiter});
             % tell user
-            hs.UserMess.String=['Data was exported in ' FileName(1:end-4),'_dat.csv files'];drawnow
+            hs.UserMess.String=['Data was exported in ' FileName(1:end-4),'_dat.csv files'];customdrawnow
         else
-            hs.UserMess.String='No data exported';drawnow
+            hs.UserMess.String='No data exported';customdrawnow
         end
         disableGUI(0);
     end %called by export
@@ -2291,7 +2293,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             defaultans = matlab.lang.makeUniqueStrings([p.TLname]);%create a sensible name
             defaultans = [tmpDir, filesep, defaultans];
             [FileName,dirUser] = uiputfile('*.csv',prompt,defaultans);
-            if FileName==0; hs.UserMess.String='';drawnow; return; end %means the user closed the dialog
+            if FileName==0; hs.UserMess.String='';customdrawnow; return; end %means the user closed the dialog
             FileName=[dirUser,FileName];
     end %called from above
     function Choices=ExportGUI()
@@ -2531,7 +2533,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 delete([FN, Suffix{fi}]);
                 if strcmp(lastwarn, 'File not found or permission denied')
                     waitfor(errordlg({'File to write'; [FN, Suffix{fi}] ;'is opened in another software.'; 'Please close it and retry'}));
-                    hs.UserMess.String='Export failed';drawnow
+                    hs.UserMess.String='Export failed';customdrawnow
                     FO=1;
                     return
                 end
@@ -2666,7 +2668,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             mtrx=makeTableExportPos(WhFr,WhCol,UM);
         elseif Fvar.groupExpC==0 %this is a shape or color metric (all same data format)
             % this can be lengthy, tell user
-            hs.UserMess.String='Calculating shape/color metrics...';drawnow
+            hs.UserMess.String='Calculating shape/color metrics...';customdrawnow
                 ExportColorsData(WhFr,WhCol,Choices); %this function requires to extract images, and thus calculates all the needed color metrics as one
                 mtrx=array2table(p.coloniesColors.Tbl(:,3:end),'VariableNames',p.coloniesColors.Titles(3:end));
                 Fvar.groupExpC=1; %the data on shape and color is exported together, so no need to run the function several times
@@ -2744,7 +2746,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
     function mtrx=makeTableExportPos(WhFr,WhCol,UM)
         ListList=[];
         for fr=WhFr
-            WhCol2=WhCol(WhCol<=length(p.counts{fr,1}));
+            WhCol2=WhCol(WhCol<=length(p.counts{fr,2}));
             if numel(WhCol2) %at least one colony
                 ListList(end+1:end+numel(WhCol2),1:2)=p.counts{fr,1}(WhCol2,:)*UM(fr);
             end
@@ -2768,12 +2770,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             
             for Fri=WhFr
                 
-                WhCol2=WhCol(WhCol<=length(p.counts{Fri}));
+                WhCol2=WhCol(WhCol<=length(p.counts{Fri,2}));
                 if isfield(p, 'counts1')
                     if numel(WhCol2)
                         tmp=[];
                         for mui=1:length(p.multiEPdirs)
-                            tmp(:,mui)=p.(['counts',num2str(mui)]){Fri,2}(WhCol2)*p.(['umConversion',num2str(mui)]);
+                            tmp(:,mui)=p.(['counts',num2str(mui)]){Fri,2}(WhCol2)*p.(['umConversion',num2str(mui)])(Fri);
                         end
                         
                         rN=[rN;tmp];
@@ -2808,7 +2810,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 Tapp=[];
                 for fri=WhFr
                     WhCol2=WhCol(WhCol<=length(p.counts{fri,2}));
-                    Tapp=[Tapp,p.estTapp(WhCol2,fri)];
+                    Tapp=[Tapp;p.estTapp(WhCol2,fri)];
                     mtrx=table(Tapp,'VariableNames',{'Tapp'});
                 end
             end
@@ -2942,7 +2944,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         for fr=frames
             dispi=dispi+1; 
             if dispi/10==round(dispi/10) 
-                hs.UserMess.String=['Calculating shape/color metrics (' num2str(100*dispi/numel(frames),2) '%)'];drawnow
+                hs.UserMess.String=['Calculating shape/color metrics (' num2str(100*dispi/numel(frames),2) '%)'];customdrawnow
             end
             img = imread([p.dir, filesep,p.l(fr).name]); %loading pic
             if sum(whichcalc([3:8,10]))>=1 %at least one needs a gray image
@@ -2991,15 +2993,18 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     dist2=dist-p.counts{fr,2}(:)'-p.counts{fr,2}(col); % removing the radii of both colonies
                     tooclose=dist2<0; tooclose(col)=0;
                     AlphaSum=0;
-                    % we want to calculate the angle of the arc of interqction between colonies
+                    % we want to calculate the angle of the arc of interaction between colonies
                     if sum(tooclose(:))>0 %if colonies touch
                         for touchCi=find(tooclose)
                             d=dist(touchCi); r1=p.counts{fr,2}(col); r2=p.counts{fr,2}(touchCi);
                             if r2>dist %the colony is fully engulfed
                                 alpha=2*pi;
                             else
-                                %the angle of interaction is calculated from the r1,r2,d triangle, where cos(angle/2) is easy to get
-                                alpha=2*acos((r1^2+d^2-r2)/(2*r1*d));
+                                %the angle of interaction is calculated
+                                %from the r1,r2,d triangle, where
+                                %cos(angle/2) is easy to get using
+                                %al-Kashi's theorem
+                                alpha=rad2deg(2*acos((r1^2+d^2-r2^2)/(2*r1*d)));
                             end
                             AlphaSum=AlphaSum+alpha;
                         end
@@ -3007,7 +3012,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     colm=colm+1;p.coloniesColors.Tbl(end,colm)=AlphaSum;
                 end
                 
-                if whichcalc(7:8) %perimeters needs an edge calc
+                if sum(whichcalc(7:8)) %perimeters needs an edge calc
                     % extract a smaller image before binarization. Then find edges
                     center=[round(p.counts{fr,1}(col,2)),round(p.counts{fr,1}(col,1))]; %contains the centers of colonies
                     Zone=ZoneDef(center,col,im,fr);
@@ -3020,6 +3025,14 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     % create a bigger mask than the colony to remove potential other objects, remove edges
                     maskColB=createCirclesMask(mini_im,round(size(mini_im)/2),p.counts{fr,2}(col)*1.1);
                     edgim(~maskColB)=0; %remove the edges that are not within colsize
+                    
+%                     if sum(tooclose(:))>0 %if colonies touch
+%                         for touchCi=find(tooclose)
+%                             maskOthercol=createCirclesMask(im,p.counts{fr,1}(touchCi,:),p.counts{fr,2}(touchCi));
+%                             edgim(maskOthercol)=0; %remove colony from pic
+%                         end
+%                     end
+                    
                 end
                 
                 if whichcalc(7) %perimeter std
@@ -3035,7 +3048,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     colm=colm+1;p.coloniesColors.Tbl(end,colm)=sum(edgim(:));
                 end
                 
-                if whichcalc(9:10) % halo based
+                if sum(whichcalc(9:10)) % halo based
                     HS=getHalosize(choices,p.counts{fr,2}(col));
                     maskColH=createCirclesMask(im,p.counts{fr,1}(col,:),p.counts{fr,2}(col)+HS);
                     maskCol=createCirclesMask(im,p.counts{fr,1}(col,:),p.counts{fr,2}(col));
@@ -3448,9 +3461,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                                 percDone=round(indx/length(frameList)*100);
                                 remT=floor((1-percDone/100)*timeElapsed/percDone*100);
                                 mess=sec2timestr(remT);
-                                txtMsg= [num2str(floor(percDone)), '% done; Estimated ',mess, ' remain' ]; drawnow
-                                axes(hs.Progress1); fill([0 0 percDone/100 percDone/100],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none');drawnow %#ok<LAXES>
-                                text(0.25, 0.5, txtMsg,'Fontsize', 14);drawnow
+                                txtMsg= [num2str(floor(percDone)), '% done; Estimated ',mess, ' remain' ]; customdrawnow
+                                axes(hs.Progress1); fill([0 0 percDone/100 percDone/100],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none');customdrawnow %#ok<LAXES>
+                                text(0.25, 0.5, txtMsg,'Fontsize', 14);customdrawnow
 
                                 indx=indx+1;
                                 if p.i~=frameList(end)
@@ -3954,9 +3967,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     case 'Yes'
                         p.kymo_tresh_shift=test;
                         p.AutoThresh=0;
-                        hs.UserMess.String='Recalculation of radius started, please wait...';drawnow
+                        hs.UserMess.String='Recalculation of radius started, please wait...';customdrawnow
                         CalcRadKymo2;
-                        hs.UserMess.String='Recalculation of radius finished';drawnow
+                        hs.UserMess.String='Recalculation of radius finished';customdrawnow
                     case 'No, but store value change'
                         p.kymo_tresh_shift=test;
                     case 'No, delete value change'
@@ -4135,7 +4148,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         
         img = imread([p.dir, filesep,p.l(p.i).name]); %loading pic
-        hs.UserMess.String='Image examples are calculated. Please wait..';drawnow
+        hs.UserMess.String='Image examples are calculated. Please wait..';customdrawnow
         disableGUI(1);%disable the GUI
         for whichCol=p.colList
             center=[round(p.counts{p.i,1}(whichCol,2)),round(p.counts{p.i,1}(whichCol,1))]; %contains the centers of colonies
@@ -4281,9 +4294,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         if ~isnan(activeList) %the active list is a userlist
             close_options_Callback;
             chngList(-activeList,p.i,zeros(length(p.counts{p.i,2}),1));
-            hs.UserMess.String=['User-List ',num2str(activeList),' was emptied'];drawnow
+            hs.UserMess.String=['User-List ',num2str(activeList),' was emptied'];customdrawnow
         else
-            hs.UserMess.String='no list is active';drawnow
+            hs.UserMess.String='no list is active';customdrawnow
         end  
         if ~p.disableSave
          saveall(p.dirS);
@@ -4305,7 +4318,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         if ~p.disableSave
             saveall(p.dirS);
         end
-        hs.UserMess.String='Spatial calibration applied to all frames';drawnow
+        hs.UserMess.String='Spatial calibration applied to all frames';customdrawnow
         refresh(0);
     end %apply spatial calibration to all frames
     function ApplyAA_Callback(~,~)
@@ -4332,13 +4345,13 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         if ~p.disableSave
             saveall(p.dirS);
         end
-        hs.UserMess.String='AOI applied to all frames';drawnow
+        hs.UserMess.String='AOI applied to all frames';customdrawnow
         refresh(0);
     end %apply AOI to all frames
     function ApplyAA_Conversion_Callback(~,~)
         ApplyConversion_Callback;
         ApplyAA_Callback;
-        hs.UserMess.String='Spatial calibration and AOI applied to all frames';drawnow
+        hs.UserMess.String='Spatial calibration and AOI applied to all frames';customdrawnow
     end %apply spatial calibration and AOI to all frames
     function RemoveMultiEP_Callback(~,~)
         for i=1:length(p.multiEPdirs)
@@ -4430,7 +4443,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             end
         end
         
-        hs.UserMess.String='starting correction process...';drawnow
+        hs.UserMess.String='starting correction process...';customdrawnow
         
         prompt = {'Indicate which colonies should be checked, seperated by space. If all colonies, insert 0.',...
             [newline,newline,'Which frames do you want to check?',newline, 'Starting frame:'],...
@@ -4496,7 +4509,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             AllCol=length(p.colList);
             for whichCol=p.colList%for which colonies
                 
-                hs.UserMess.String=['Colony Nr. ',num2str(whichCol), ', Radius = ', num2str(round(p.RadMean(whichCol,p.i))), 'px'];drawnow
+                hs.UserMess.String=['Colony Nr. ',num2str(whichCol), ', Radius = ', num2str(round(p.RadMean(whichCol,p.i))), 'px'];customdrawnow
                 axes(hs.fig); %#ok<LAXES>
                 
                 rgbcolG=getSmallImage(whichCol, img);%call to get the small image displaying only the colony in grayscale.
@@ -4536,7 +4549,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                                 delete(hs.Progress1)
                                 hs.Progress1=axes('Parent', hs.UserMessage, 'Color', [0.8 0.9 0.8], 'Visible', 'off', 'Xcolor', 'none','Ycolor', 'none','Position', [0 0 1 1]);
                                 hs.Progress2=axes('Parent', hs.UserMessage, 'Color', [0.8 0.9 0.8], 'Visible', 'off', 'Xcolor', 'none','Ycolor', 'none','Position', [0 0 1 1]);
-                                hs.UserMess.String='Finished radius correction';drawnow
+                                hs.UserMess.String='Finished radius correction';customdrawnow
                                 
                                 alldone=1;
                                 break;
@@ -4544,7 +4557,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                         end
                     case 'No. Correct here'
                         % instructions to users
-                        hs.UserMess.String='click to place center, drag radius and click again to save';drawnow
+                        hs.UserMess.String='click to place center, drag radius and click again to save';customdrawnow
                         
                         %get colony center
                         if strcmp(p.imgmode, 'rgb') && ~p.BW && ~Fvar.imgenhanced && p.imgMethod==0
@@ -4590,7 +4603,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                             hs.Progress1=axes('Parent', hs.UserMessage, 'Color', [0.8 0.9 0.8], 'Visible', 'off', 'Xcolor', 'none','Ycolor', 'none','Position', [0 0 1 1]);
                             hs.Progress2=axes('Parent', hs.UserMessage, 'Color', [0.8 0.9 0.8], 'Visible', 'off', 'Xcolor', 'none','Ycolor', 'none','Position', [0 0 1 1]);
                             p.imgMethod=imgMethodBck;
-                            hs.UserMess.String='Finished radius correction';drawnow
+                            hs.UserMess.String='Finished radius correction';customdrawnow
                             %                                 p.imgMethod=ImgMethod;
                             alldone=1;
                             break;
@@ -4609,9 +4622,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                         hs.Progress2=axes('Parent', hs.UserMessage, 'Color', [0.8 0.9 0.8], 'Visible', 'off', 'Xcolor', 'none','Ycolor', 'none','Position', [0 0 1 1]);
                         hs.UserMess.String='';
                         p.imgMethod=imgMethodBck;
-                        hs.UserMess.String='Aborted radius correction';drawnow
+                        hs.UserMess.String='Aborted radius correction';customdrawnow
                         p.imgMethod=imgMethodBck;
-                        % axes(hs.Progress2); fill([0 0 1 1],[0,1,1,0],[0.5 0.7 0.8]); set(hs.Progress2,'Xlim',[0 1],'Ylim',[0 1],'Xcolor','none','Ycolor','none'); drawnow
+                        % axes(hs.Progress2); fill([0 0 1 1],[0,1,1,0],[0.5 0.7 0.8]); set(hs.Progress2,'Xlim',[0 1],'Ylim',[0 1],'Xcolor','none','Ycolor','none'); customdrawnow
                         alldone=1;
                         break;
                 end
@@ -4623,7 +4636,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 
                 %progress bar
                 a=(indx/AllCol);
-                axes(hs.Progress2); fill([0 0 a a],[0,1,1,0],[0.5 0.7 0.8]); set(hs.Progress2,'Xlim',[0 1],'Ylim',[0 1],'Xcolor','none','Ycolor','none'); drawnow %#ok<LAXES>
+                axes(hs.Progress2); fill([0 0 a a],[0,1,1,0],[0.5 0.7 0.8]); set(hs.Progress2,'Xlim',[0 1],'Ylim',[0 1],'Xcolor','none','Ycolor','none'); customdrawnow %#ok<LAXES>
                 text(0.25, 0.5, ['analysed ' num2str(indx) ' of ' num2str(AllCol) ' colonies'],'Fontsize', 10);
                 indx=indx+1;
                 saveall(p.dirS);
@@ -4634,7 +4647,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             %progress bar
             a=floor(100*(1-((whichTime-(p.timeList(1)-p.timeList(2)))/(length(p.timeList)))));
             textMsg=([num2str(floor(a)),'% done, est. ' sec2timestr((100*toc/a-toc)), ' remaining']);
-            axes(hs.Progress1); fill([0 0 a/100 a/100],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); drawnow %#ok<LAXES>
+            axes(hs.Progress1); fill([0 0 a/100 a/100],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); customdrawnow %#ok<LAXES>
             text(0.25, 0.5, ['Frame ',num2str(imgIndx),' of ' num2str(length(p.timeList)),' analysed'],'Fontsize', 10);
             hs.UserMess.String=textMsg;
             imgIndx=imgIndx+1;
@@ -4657,7 +4670,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         else
             set_frame(curf);
         end
-        hs.UserMess.String='Finished radius correction';drawnow
+        hs.UserMess.String='Finished radius correction';customdrawnow
         if ~p.disableSave
             saveall(p.dirS);
         end
@@ -4667,7 +4680,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
     function CalcRadKymo2_Callback(~,~)
 %         initializeedges
     save_options_Callback;
-    hs.UserMess.String='Please wait...';drawnow
+    hs.UserMess.String='Please wait...';customdrawnow
     p.showplot=0;
     p.colList=1:size(Kymo.Kymo,1);
 %     p.scalepillbox=[];
@@ -4693,8 +4706,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         
          if (indx==1) || mod(indx,5)==0 || indx==length(p.colList)
             a=(indx/(length(p.colList)));
-            fill([0 0 a a],[0,1,1,0],[0.5 0.7 0.8],'parent', hs.Progress2); set(hs.Progress2,'Xlim',[0 1],'Ylim',[0 1],'Xcolor','none','Ycolor','none'); drawnow
-            text(0.25, 0.5, ['analysed ' num2str(indx) ' of ' num2str(length(p.colList)) ' colonies'],'Fontsize', 10, 'parent', hs.Progress2);drawnow
+            fill([0 0 a a],[0,1,1,0],[0.5 0.7 0.8],'parent', hs.Progress2); set(hs.Progress2,'Xlim',[0 1],'Ylim',[0 1],'Xcolor','none','Ycolor','none'); customdrawnow
+            text(0.25, 0.5, ['analysed ' num2str(indx) ' of ' num2str(length(p.colList)) ' colonies'],'Fontsize', 10, 'parent', hs.Progress2);customdrawnow
          end
             
          indx=indx+1;
@@ -4705,7 +4718,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             saveall(p.dirS);
             voronoisave(p.dirS);
     end
-    hs.UserMess.String='Calculations finished';drawnow
+    hs.UserMess.String='Calculations finished';customdrawnow
 
 
       disableGUI(0);%disable the GUI 
@@ -4908,9 +4921,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             errordlg('Sorry, no backup was saved. Restoring not possible'); return;
         end
         if sum(p.UserColNb==0)>=1
-            hs.UserMess.String='All colony radius restored';drawnow
+            hs.UserMess.String='All colony radius restored';customdrawnow
         else
-            hs.UserMess.String='Radius for indicated colonies restored';drawnow
+            hs.UserMess.String='Radius for indicated colonies restored';customdrawnow
         end
         if ~p.disableSave
             saveall(p.dirS);
@@ -4937,7 +4950,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
              set(hs.registration,'Value',0);
              
          end
-             hs.UserMess.String='Image registration removed';drawnow
+             hs.UserMess.String='Image registration removed';customdrawnow
     end %reset registration
     function FailedFrames_Callback(~,~)
         prompt = {'Frame numbers of which radius data should be replaced with NaN (seperate by space):'};
@@ -5282,7 +5295,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         %if no circle was possible to detect or the user wants to change
         %the circle, go here
         while ~done
-            hs.UserMess.String='Select three non-colinear points to delimit the petri dish surface';drawnow
+            hs.UserMess.String='Select three non-colinear points to delimit the petri dish surface';customdrawnow
             if strcmp(p.imgmode, 'rgb') && ~p.BW && ~Fvar.imgenhanced
                 [X, Y] = ginput(3);
             else
@@ -5314,7 +5327,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             p.umConversion(p.i)=refUm/refPxl;
         end
         %RadUmCalc MB:is not necessary, is it?
-        hs.UserMess.String=['Spatial calibration: 1 pxl = ',num2str(p.umConversion(p.i)), 'um'];drawnow
+        hs.UserMess.String=['Spatial calibration: 1 pxl = ',num2str(p.umConversion(p.i)), 'um'];customdrawnow
         if p.vAA~=vAAstate
             p.vAA=vAAstate;
             refresh(0)
@@ -5346,7 +5359,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             set(hs.dist2, 'String', ''); return
         end
         close(hs.umRefFig)
-        hs.UserMess.String='Place the ruler on the distance you indicated and hit enter when you are done';drawnow
+        hs.UserMess.String='Place the ruler on the distance you indicated and hit enter when you are done';customdrawnow
         vAAstate=p.vAA;%if there is a AA displayed, disable that for a clearer image
         if p.vAA; p.vAA=0; refresh(0); end
         
@@ -5371,7 +5384,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             p.umConversion(p.i)=refUm/refPxl;
         end
         %RadUmCalc MB: is not necessary is it
-        hs.UserMess.String=['Spatial calibration: 1 pxl = ',num2str(p.umConversion(p.i)), 'um'];drawnow
+        hs.UserMess.String=['Spatial calibration: 1 pxl = ',num2str(p.umConversion(p.i)), 'um'];customdrawnow
         if p.vAA~=vAAstate
             p.vAA=vAAstate;
             refresh(1)
@@ -5396,7 +5409,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             p.umConversion(p.i)=refUm/refPxl;
         end
         %RadUmCalc . MB: is not necessessary, is it?
-        hs.UserMess.String=['Spatial calibration: 1 pxl = ',num2str(p.umConversion(p.i)), 'um'];drawnow
+        hs.UserMess.String=['Spatial calibration: 1 pxl = ',num2str(p.umConversion(p.i)), 'um'];customdrawnow
         p.ExportMode='um';
         if ~p.disableSave
             saveall(p.dirS);
@@ -5457,9 +5470,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 
                 while ~done
                     if isnan(p.AAr(p.i))
-                        hs.UserMess.String='No circle was found. Manually click on three points to define circle for analysis area';drawnow
+                        hs.UserMess.String='No circle was found. Manually click on three points to define circle for analysis area';customdrawnow
                     else
-                        hs.UserMess.String='Click on three points to define circle for analysis area';drawnow
+                        hs.UserMess.String='Click on three points to define circle for analysis area';customdrawnow
                     end
                     if strcmp(p.imgmode, 'rgb') && ~p.BW
                         [X, Y] = ginput(3);
@@ -5498,9 +5511,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         refresh(0);
         disableGUI(0);%disable the GUI
-        hs.UserMess.String='';drawnow
+        hs.UserMess.String='';customdrawnow
         Fvar.clickdisable=~p.mouseaddrem;
-        hs.UserMess.String='Plate AOI defined';drawnow
+        hs.UserMess.String='Plate AOI defined';customdrawnow
     end %AOI as plate/circle
     function DelimitAreaPolygon_Callback(~,~) 
         Fvar.clickdisable=1;
@@ -5532,9 +5545,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         refresh(0);
         disableGUI(0);%disable the GUI
-        hs.UserMess.String='';drawnow
+        hs.UserMess.String='';customdrawnow
         Fvar.clickdisable=~p.mouseaddrem;
-        hs.UserMess.String='Polygon AOI defined';drawnow
+        hs.UserMess.String='Polygon AOI defined';customdrawnow
     end %AOI as polygon
     function DelimitAreaWhole_Callback(~,~) 
         Fvar.clickdisable=1;
@@ -5555,9 +5568,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         refresh(0);
         disableGUI(0);%disable the GUI
-        hs.UserMess.String='';drawnow
+        hs.UserMess.String='';customdrawnow
         Fvar.clickdisable=~p.mouseaddrem;
-        hs.UserMess.String='AOI removed';drawnow
+        hs.UserMess.String='AOI removed';customdrawnow
     end %remove AOI
     function EnhanceImage_Callback(~,~)
         Fvar.imgenhanced2= ~Fvar.imgenhanced2;
@@ -5577,11 +5590,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             if strcmp(p.mode, 'TL') && p.i~=p.focalframe
                 set_frame(p.focalframe); %the calculation is done on the focal frame
             end
-            hs.UserMess.String='Draw rectangle to define max & min intensity. Doubleclick to confirm';drawnow
+            hs.UserMess.String='Draw rectangle to define max & min intensity. Doubleclick to confirm';customdrawnow
           
             h=imrect(); %#ok<IMRECT>
             position = wait(h); %user inputs rectange for fast calculation
-            hs.UserMess.String='Please wait...';drawnow
+            hs.UserMess.String='Please wait...';customdrawnow
             
             if strcmp(p.mode, 'single') %get indexes to reset to proper frame later
                 indx1 = p.i;
@@ -5655,7 +5668,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         
         %         end
-        hs.UserMess.String='';drawnow
+        hs.UserMess.String='';customdrawnow
         Fvar.clickdisable=~p.mouseaddrem;
         
     end %display lighting enhanced image
@@ -5665,7 +5678,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             maximumR=max(p.counts{p.i,2});
             p.minRadN=round(minimumR)-1;
             p.maxRadN=round(maximumR)+1;
-            hs.UserMess.String=['Minimum radius: ', num2str(p.minRadN), 'px; maximum radius: ', num2str(p.maxRadN), 'px'];drawnow
+            hs.UserMess.String=['Minimum radius: ', num2str(p.minRadN), 'px; maximum radius: ', num2str(p.maxRadN), 'px'];customdrawnow
             
             if ~p.disableSave
                 saveall(p.dirS);
@@ -5717,7 +5730,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         else %we are in single mode, so multiple frames can be selected
             frameList= UserChoiceFrames('detect colonies on'); 
             if isempty(frameList)% the user canceled ,abort
-            hs.UserMess.String='';drawnow 
+            hs.UserMess.String='';customdrawnow 
             return;
             end 
             frameList=sort(unique(frameList));
@@ -5726,7 +5739,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
            end
         end
        
-        hs.UserMess.String='Finding colonies...';drawnow
+        hs.UserMess.String='Finding colonies...';customdrawnow
         indx=1;
         disableGUI(1);%disable the GUI
         tic;% istart=p.i; %initialise time calculations
@@ -5748,9 +5761,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             percDone=round(indx/length(frameList)*100);
             remT=floor((1-percDone/100)*timeElapsed/percDone*100);
             mess=sec2timestr(remT);
-            txtMsg= [num2str(floor(percDone)), '% done; Estimated ',mess, ' remain' ]; drawnow
-            axes(hs.Progress1); fill([0 0 percDone/100 percDone/100],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none');drawnow %#ok<LAXES>
-            text(0.25, 0.5, txtMsg,'Fontsize', 14);drawnow
+            txtMsg= [num2str(floor(percDone)), '% done; Estimated ',mess, ' remain' ]; customdrawnow
+            axes(hs.Progress1); fill([0 0 percDone/100 percDone/100],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none');customdrawnow %#ok<LAXES>
+            text(0.25, 0.5, txtMsg,'Fontsize', 14);customdrawnow
             
             indx=indx+1;
             if p.i~=frameList(end)
@@ -5788,11 +5801,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         refresh(0);
         disableGUI(0);%disable the GUI
-        hs.UserMess.String='Colony search completed';drawnow
+        hs.UserMess.String='Colony search completed';customdrawnow
  
     end %find colonies button press
     function FindColonies
-        hs.UserMess.String='searching for colonies...';drawnow
+        hs.UserMess.String='searching for colonies...';customdrawnow
         %% check if should use smaller images
 %         tic
         if p.AA(p.i)==0 %the whole image is kept by the user
@@ -5989,7 +6002,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         warning('on','images:imfindcircles:warnForLargeRadiusRange')
         pause(0.0001)
-        hs.UserMess.String=['calculated for image Nr.' num2str(p.i)];drawnow
+        hs.UserMess.String=['calculated for image Nr.' num2str(p.i)];customdrawnow
     end %create clean binary images
     function BW=AdaptiveBin(i1)
         if islogical(i1)
@@ -6021,7 +6034,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         p.radii=p.radii(qual2>=p.minfillcircles);
         qual=qual(qual2>=p.minfillcircles);
         if isempty(qual)
-            hs.UserMess.String='Error, no colonies found';drawnow
+            hs.UserMess.String='Error, no colonies found';customdrawnow
             return
         end
         X=p.centers(:,1); X=X(qual2>=p.minfillcircles);
@@ -6427,7 +6440,7 @@ p.showplot=0; waittime=1;
                 end %end of 3rd quality check
 
         %         4th quality check round:
-        %         oarea contains proportion of circle pixel which are overlaping
+        %         area contains proportion of circle pixel which are overlaping
         %         with any circle
                 oarea=zeros(length(r11),1);
                 for i2=1:length(r11)
@@ -6544,9 +6557,9 @@ p.showplot=0; waittime=1;
     function EnableMouseAddRem_Callback(~,~)
         p.mouseaddrem=~p.mouseaddrem;
         if p.mouseaddrem
-            hs.UserMess.String='left-click and hold to add | middle-click to remove';drawnow
+            hs.UserMess.String='left-click and hold to add | middle-click to remove';customdrawnow
         else
-            hs.UserMess.String='click to add and remove disabled';drawnow
+            hs.UserMess.String='click to add and remove disabled';customdrawnow
         end
         Fvar.clickdisable=~p.mouseaddrem;
     end %enable mouse clicks to add/remove
@@ -6572,7 +6585,7 @@ p.showplot=0; waittime=1;
         makeUndo(0); %saving for undos
         
         % instructions to users
-        hs.UserMess.String='click and hold on center of colony, drag radius to border, release & click again to confirm';drawnow 
+        hs.UserMess.String='click and hold on center of colony, drag radius to border, release & click again to confirm';customdrawnow 
         
         if ~Fvar.clickcall
             %get colony center
@@ -6582,7 +6595,7 @@ p.showplot=0; waittime=1;
                 [X1, Y1] =  ginputCustom(1);
             end
             if X1<1 || Y1<1 || X1>size(Fvar.rgb,2) || Y1>size(Fvar.rgb,1) %outside of image range
-                hs.UserMess.String=''; drawnow
+                hs.UserMess.String=''; customdrawnow
                 Fvar.clickdisable=0;
                 return
             end
@@ -6596,7 +6609,7 @@ p.showplot=0; waittime=1;
                 set(gcf, 'WindowButtonMotionFcn', ''); %unlock the graph
             end
         else
-            hs.UserMess.String='hold & drag to border of colony, release & click again to confirm';drawnow
+            hs.UserMess.String='hold & drag to border of colony, release & click again to confirm';customdrawnow
             
             
             Fvar.clickcall=0;
@@ -6606,7 +6619,7 @@ p.showplot=0; waittime=1;
             Y1=seedPt(1,2);
             scatter(X1, Y1,100,'+', 'b');
             if X1<1 || Y1<1 || X1>size(Fvar.rgb,2) || Y1>size(Fvar.rgb,1) %outside of image range
-                hs.UserMess.String=''; drawnow
+                hs.UserMess.String=''; customdrawnow
                 Fvar.clickdisable=0;
                 return
             end
@@ -6630,7 +6643,7 @@ p.showplot=0; waittime=1;
                 r = nanmedian(p.radii);
             end
         catch
-            hs.UserMess.String=''; drawnow
+            hs.UserMess.String=''; customdrawnow
             Fvar.clickdisable=0;
             return
         end
@@ -6686,7 +6699,7 @@ p.showplot=0; waittime=1;
             voronoisave(p.dirS);
         end
         refresh(1);
-        hs.UserMess.String=['Added colony with radius=',num2str(round(r)),'px'];drawnow
+        hs.UserMess.String=['Added colony with radius=',num2str(round(r)),'px'];customdrawnow
         Fvar.clickdisable= ~p.mouseaddrem;
     end %add colony
     function RemoveCol2_Callback(~,~) 
@@ -6702,7 +6715,7 @@ p.showplot=0; waittime=1;
         end
        
         % instructions to users
-        hs.UserMess.String='Click on colony to remove';drawnow
+        hs.UserMess.String='Click on colony to remove';customdrawnow
         
         in=click_Colony; %get colony which have been clicked on
         if sum(in)==0
@@ -6711,24 +6724,24 @@ p.showplot=0; waittime=1;
         deleteCol(in); % call the function to delete
         
         if length(find(in==1))==1
-        hs.UserMess.String=['Colony Nr. ' num2str(find(in==1)) ' deleted'];drawnow
+        hs.UserMess.String=['Colony Nr. ' num2str(find(in==1)) ' deleted'];customdrawnow
         else
-            hs.UserMess.String=[num2str(length(find(in==1))) 'colonies deleted'];drawnow
+            hs.UserMess.String=[num2str(length(find(in==1))) 'colonies deleted'];customdrawnow
         end
         Fvar.clickdisable= ~p.mouseaddrem;
     end %remove colony
     function ClearZone_Callback(~,~)
         Fvar.clickdisable=1;
-        hs.UserMess.String='click to place polygon corners, double click to finish';drawnow
+        hs.UserMess.String='click to place polygon corners, double click to finish';customdrawnow
         cleanzone(0)
-        hs.UserMess.String='';drawnow
+        hs.UserMess.String='';customdrawnow
         Fvar.clickdisable= ~p.mouseaddrem;
     end %clear inside of polygon
     function ClearOutZone_Callback(~,~)
         Fvar.clickdisable=1;
-        hs.UserMess.String='click to place polygon corners, double click to finish';drawnow
+        hs.UserMess.String='click to place polygon corners, double click to finish';customdrawnow
         cleanzone(1)
-        hs.UserMess.String='';drawnow
+        hs.UserMess.String='';customdrawnow
         Fvar.clickdisable= ~p.mouseaddrem;
     end %clear outside of polygon
     function cleanzone(InOut)
@@ -6753,7 +6766,7 @@ p.showplot=0; waittime=1;
         try %because the user can start polygon function and not do anything...
         in=inpolygon(p.centers(:,1),p.centers(:,2),xi,yi); %all cells in polygon
         catch
-            hs.UserMess.String='';drawnow
+            hs.UserMess.String='';customdrawnow
         end
         if InOut
             in=~in;
@@ -6761,7 +6774,7 @@ p.showplot=0; waittime=1;
         deleteCol(in)
             
         disableGUI(0);%disable the GUI
-        hs.UserMess.String='';drawnow
+        hs.UserMess.String='';customdrawnow
     end %find colonies within polygon
     function deleteCol(in)
         
@@ -6904,19 +6917,19 @@ p.showplot=0; waittime=1;
                 switch eventdata.Key
                     case 'return'
                         whichCol=str2num(get(hs.HLinput, 'String')); %#ok<ST2NM> %get the string in the field
-                        if isempty(whichCol);hs.UserMess.String=''; drawnow; return; end %user cancelled
+                        if isempty(whichCol);hs.UserMess.String=''; customdrawnow; return; end %user cancelled
                     otherwise
                         return
                 end
             elseif strcmp(eventdata.EventName, 'Action')
                 whichCol=str2double(get(hs.HLinput, 'String')); %get the string in the field
-                if isempty(whichCol);hs.UserMess.String=''; drawnow; return; end %user cancelled
+                if isempty(whichCol);hs.UserMess.String=''; customdrawnow; return; end %user cancelled
             end
 %         else
 %             whichCol=find(p.UserLists(:,1));
         end
         
-        if isempty(whichCol);hs.UserMess.String=''; drawnow; return; end %user cancelled
+        if isempty(whichCol);hs.UserMess.String=''; customdrawnow; return; end %user cancelled
         if strcmp(p.mode, 'TL') %different frames to get the colony centers from
             ckfram=p.focalframe;
         elseif strcmp(p.mode, 'single')
@@ -6926,7 +6939,7 @@ p.showplot=0; waittime=1;
         if  isempty(whichCol) || sum(isnan(whichCol))>0 || sum(whichCol<1)>0 || sum(whichCol>lnck)>0
             %do nothing if the input is not correct apart from telling the
             %user that
-            hs.UserMess.String='please enter a valid colony number';drawnow
+            hs.UserMess.String='please enter a valid colony number';customdrawnow
             return
         end
         ColList=whichCol;
@@ -6955,16 +6968,16 @@ p.showplot=0; waittime=1;
         end
         %just another message
         if length(ColList)==1
-            hs.UserMess.String=['Highlighted colony ',num2str(whichCol)];drawnow
+            hs.UserMess.String=['Highlighted colony ',num2str(whichCol)];customdrawnow
         else
-            hs.UserMess.String=['Highlighted ',num2str(length(ColList)), ' colonies'];drawnow
+            hs.UserMess.String=['Highlighted ',num2str(length(ColList)), ' colonies'];customdrawnow
         end
     end %highlight colony
     function DeleteHighlightCol_Callback(~,~)
         whichCol=str2num(get(hs.HLinput, 'String')); %#ok<ST2NM> %get the string in the field
-        if isempty(whichCol);hs.UserMess.String=''; drawnow; return; end %user cancelled
+        if isempty(whichCol);hs.UserMess.String=''; customdrawnow; return; end %user cancelled
         if sum(whichCol>length(p.counts{p.i,2}))>0
-            hs.UserMess.String='Selected colonies out of bounds';drawnow
+            hs.UserMess.String='Selected colonies out of bounds';customdrawnow
             return
         end
         ToDelete=zeros(length(p.radii),1); ToDelete(whichCol)=1;%ToDelete=~ToDelete;
@@ -6980,18 +6993,18 @@ p.showplot=0; waittime=1;
         makeUndo(0); %creating an undo
         Fvar.clickdisable=1;
         if activeList>=-Fvar.numNonUserList || isnan(activeList)
-            hs.UserMess.String='select a user list that can be modified';drawnow
+            hs.UserMess.String='select a user list that can be modified';customdrawnow
             disableGUI(0);
             return;
         end
         
         if isempty(p.counts{p.i,1})
-            hs.UserMess.String='No colonies on the image';drawnow
+            hs.UserMess.String='No colonies on the image';customdrawnow
             disableGUI(0);
             return;
         end
         
-        hs.UserMess.String='Click inside a colony to add or place polygon by clicking outside a colony';drawnow
+        hs.UserMess.String='Click inside a colony to add or place polygon by clicking outside a colony';customdrawnow
         if isempty(p.counts{p.i,1}); return; end
         if sum(size(p.l))==0; return; end %the list doesn't exist
         
@@ -7011,9 +7024,9 @@ p.showplot=0; waittime=1;
         
         refresh(1)
         if sum(in)==1
-            hs.UserMess.String=['Added colony n°' num2str(find(in==1)) ' to the user list'];drawnow
+            hs.UserMess.String=['Added colony n°' num2str(find(in==1)) ' to the user list'];customdrawnow
         else
-            hs.UserMess.String=['Added ' num2str(sum(in==1)) ' colonies to the user list'];drawnow
+            hs.UserMess.String=['Added ' num2str(sum(in==1)) ' colonies to the user list'];customdrawnow
         end
         disableGUI(0);%disable the GUI
         Fvar.clickdisable= ~p.mouseaddrem;
@@ -7036,7 +7049,7 @@ p.showplot=0; waittime=1;
         p.ShowVoronoiEdges=0;
          if isempty(p.counts)
                 errordlg('No colonies detected'); 
-                hs.UserMess.String='Aborted';drawnow
+                hs.UserMess.String='Aborted';customdrawnow
                 return;
          end
         %Check if already calculated Voronoi, and give the user a chance to cancel recalculation 
@@ -7070,7 +7083,7 @@ p.showplot=0; waittime=1;
         else %we are in single mode, so multiple frames can be selected
             frameList= UserChoiceFrames('calculate the voronoi of');
             if isempty(frameList)% the user canceled ,abort
-                hs.UserMess.String='';drawnow
+                hs.UserMess.String='';customdrawnow
                 return;
             end
             frameList=sort(unique(frameList));
@@ -7111,7 +7124,7 @@ p.showplot=0; waittime=1;
             if val~=0; return; end
         end
      
-        hs.UserMess.String='Voronoi area is calculated. Please wait...';drawnow
+        hs.UserMess.String='Voronoi area is calculated. Please wait...';customdrawnow
         indx=1;
         tfc=0; 
         obc=0; %too few colonies on plate, some colonies out of the plate boundary
@@ -7130,9 +7143,9 @@ p.showplot=0; waittime=1;
             percDone=round(indx/length(frameList)*100);
             remT=floor((1-percDone/100)*timeElapsed/percDone*100);
             mess=sec2timestr(remT);
-            txtMsg= [num2str(floor(percDone)), '% done; Estimated ',mess, ' remain' ]; drawnow
-            axes(hs.Progress1); fill([0 0 percDone/100 percDone/100],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none');drawnow %#ok<LAXES>
-            text(0.25, 0.5, txtMsg,'Fontsize', 14);drawnow
+            txtMsg= [num2str(floor(percDone)), '% done; Estimated ',mess, ' remain' ]; customdrawnow
+            axes(hs.Progress1); fill([0 0 percDone/100 percDone/100],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none');customdrawnow %#ok<LAXES>
+            text(0.25, 0.5, txtMsg,'Fontsize', 14);customdrawnow
             indx=indx+1;
             if p.i~=frameList(end)
                 set_frame(frameList(indx));
@@ -7156,7 +7169,7 @@ p.showplot=0; waittime=1;
          p.ShowVoronoiAreas=1;
          p.ShowVoronoiEdges=1;
          refresh(0)
-         hs.UserMess.String='Voronoi area calculation finished';drawnow 
+         hs.UserMess.String='Voronoi area calculation finished';customdrawnow 
     end %calculate vornoi
     function [tfc,obc]=CalculateVoronoiAreas(~,~)
         AAr=p.AAr(p.i);
@@ -7290,7 +7303,7 @@ p.showplot=0; waittime=1;
         makeUndo(0); %saving for undos
         
         % instructions to users
-        hs.UserMess.String='click on image to place colony with radius = 0';drawnow
+        hs.UserMess.String='click on image to place colony with radius = 0';customdrawnow
         
         %get colony center
         if strcmp(p.imgmode, 'rgb') && ~p.BW
@@ -7299,7 +7312,7 @@ p.showplot=0; waittime=1;
             [X1, Y1] =  ginputCustom(1);
         end
         if X1<1 || Y1<1 || X1>size(Fvar.rgb,2) || Y1>size(Fvar.rgb,1)
-            hs.UserMess.String=''; drawnow
+            hs.UserMess.String=''; customdrawnow
             return
         end
         %         hold on;
@@ -7337,7 +7350,7 @@ p.showplot=0; waittime=1;
             voronoisave(p.dirS);
         end
         refresh(1);
-        hs.UserMess.String='';drawnow
+        hs.UserMess.String='';customdrawnow
         Fvar.clickdisable= ~p.mouseaddrem;
     end %add a zero radius colony
     function MultiEPLoad_Callback(~,~)
@@ -7383,7 +7396,7 @@ p.showplot=0; waittime=1;
             saveall(p.dirS);
         end
         refresh(0)
-        hs.UserMess.String=[num2str(length(p.multiEPdirs)), ' multi-EP folders loaded'];drawnow
+        hs.UserMess.String=[num2str(length(p.multiEPdirs)), ' multi-EP folders loaded'];customdrawnow
 
     end %load linked folders button
     function loader=MultiEP_LoadCenter
@@ -7396,13 +7409,13 @@ p.showplot=0; waittime=1;
             if ~er || isempty(p.counts)
                 p=pback;
                 loader=1;
-                hs.UserMess.String=[p.multiEPdirs{i}, ' does not contain data. Process aborted.'];drawnow
+                hs.UserMess.String=[p.multiEPdirs{i}, ' does not contain data. Process aborted.'];customdrawnow
                 return
             end
             if length(p.l)~=length(pback.l)
                 p=pback;
                 hs.UserMess.String=[p.multiEPdirs{i},...
-                    ' contains not equal number of images as in loaded folder. Process aborted.'];drawnow
+                    ' contains not equal number of images as in loaded folder. Process aborted.'];customdrawnow
                 loader=1;
                 return
             end
@@ -7474,7 +7487,7 @@ p.showplot=0; waittime=1;
         for i=1:length(p.multiEPdirs)
             i2=p.i;
             if isempty(p.(['counts',num2str(i)]){i2,1})
-                hs.UserMess.String='No sequence data for this frame loaded';drawnow
+                hs.UserMess.String='No sequence data for this frame loaded';customdrawnow
                 return
             end
                 viscircles(p.(['counts',num2str(i)]){i2,1}, p.(['counts',num2str(i)]){i2,2}+1, 'Color', col(i,:));
@@ -7489,7 +7502,7 @@ p.showplot=0; waittime=1;
         
         flist= UserChoiceFrames('plot');
         if isempty(flist)% the user canceled ,abort
-        hs.UserMess.String='';drawnow 
+        hs.UserMess.String='';customdrawnow 
         return;
         end    
         
@@ -7522,9 +7535,9 @@ p.showplot=0; waittime=1;
         for i=1:length(p.multiEPdirs)
 
             if i==1
-                hs.UserMess.String='Click on a point on the reference image';drawnow
+                hs.UserMess.String='Click on a point on the reference image';customdrawnow
             else
-                hs.UserMess.String='Click on the same point on the image to align';drawnow
+                hs.UserMess.String='Click on the same point on the image to align';customdrawnow
             end
             
             if i==1 %the reference image, get fixed points
@@ -7537,7 +7550,7 @@ p.showplot=0; waittime=1;
                 end
                 [X1, Y1] =  ginputCustom(1);
                         if X1<1 || Y1<1 || X1>size(Fvar.rgb,2) || Y1>size(Fvar.rgb,1)
-                            hs.UserMess.String=''; drawnow
+                            hs.UserMess.String=''; customdrawnow
                             return
                         end
                 fixedPoints(i2,1)=X1; fixedPoints(i2,2)=Y1;
@@ -7548,13 +7561,13 @@ p.showplot=0; waittime=1;
                         p.i=iback;
                         p.iold=0;
                         refresh(0);
-                        hs.UserMess.String=['No images or folder ', compdirs{i-1}, ' missing'];drawnow
+                        hs.UserMess.String=['No images or folder ', compdirs{i-1}, ' missing'];customdrawnow
                     end
                 elseif ~exist([compdirs{i-1}, filesep, p.(['l',num2str(compls(i-1))])(p.i).name], 'file')
                     p.i=iback;
                     p.iold=0;
                     refresh(0);
-                    hs.UserMess.String=['No images or folder ', compdirs{i-1}, ' missing'];drawnow
+                    hs.UserMess.String=['No images or folder ', compdirs{i-1}, ' missing'];customdrawnow
                     return
                 end
                 if isfield(p, 'counts1')
@@ -7569,7 +7582,7 @@ p.showplot=0; waittime=1;
                 [X1, Y1] =  ginputCustom(1);
 
                 if X1<1 || Y1<1 || X1>size(overgray,2) || Y1>size(overgray,1)
-                    hs.UserMess.String=''; drawnow
+                    hs.UserMess.String=''; customdrawnow
                     return
                 end
 
@@ -7605,7 +7618,7 @@ p.showplot=0; waittime=1;
         p.i=iback;
         p.iold=0;
         refresh(0);
-        hs.UserMess.String='All images aligned';drawnow
+        hs.UserMess.String='All images aligned';customdrawnow
     end %register EP images
     function MultiEPGR_Callback(~,~)
 %         get timepoints
@@ -7617,7 +7630,7 @@ p.showplot=0; waittime=1;
         spmis=0;
         for fr=flist
             if isempty(p.(['counts',num2str(1)]){fr,2})
-                    hs.UserMess.String='Sequence data for at least one frame/folder is missing';drawnow
+                    hs.UserMess.String='Sequence data for at least one frame/folder is missing';customdrawnow
                     return
             end
             rad=nan(length(p.(['counts',num2str(1)]){fr,2}), length(p.multiEPdirs));
@@ -7630,7 +7643,7 @@ p.showplot=0; waittime=1;
                 end
                 catch
                     spmis=1; 
-                    hs.UserMess.String='Spatial calibration for at least one frame/folder is missing';drawnow
+                    hs.UserMess.String='Spatial calibration for at least one frame/folder is missing';customdrawnow
 %                     return
                 end
             end
@@ -7651,9 +7664,9 @@ p.showplot=0; waittime=1;
             saveall(p.dirS);
         end
         set(hs.GRdist, 'BackgroundColor', hs.btnCol.green1, 'Enable', 'on');
-        hs.UserMess.String='Growth rate calculated';drawnow
+        hs.UserMess.String='Growth rate calculated';customdrawnow
         if spmis
-            hs.UserMess.String='Spatial calibration for at least one frame/folder is missing';drawnow
+            hs.UserMess.String='Spatial calibration for at least one frame/folder is missing';customdrawnow
         end
     end %calculate linear GR as slope
     function failed=EP_timepoints(~,~)
@@ -7674,7 +7687,7 @@ p.showplot=0; waittime=1;
         end
 
         if isempty(answer)
-            hs.UserMess.String='';drawnow
+            hs.UserMess.String='';customdrawnow
             return
         end
 %         check if all are in correct format
@@ -7682,7 +7695,7 @@ p.showplot=0; waittime=1;
             tst=str2double(answer{i});
             if length(tst)>1 || sum(isnan(tst)) || ...
                     sum(tst<0) || sum(isempty(tst))
-                hs.UserMess.String='Please enter valid numbers for time';drawnow
+                hs.UserMess.String='Please enter valid numbers for time';customdrawnow
                 failed=1;
                 return
             end
@@ -7700,7 +7713,7 @@ p.showplot=0; waittime=1;
         
         defaultans = {num2str(p.GRRef), num2str(p.TdetRef)};
         answer = inputdlg(prompt,dlg_title,num_lines,defaultans);
-        if isempty(answer);hs.UserMess.String='';drawnow; return; end
+        if isempty(answer);hs.UserMess.String='';customdrawnow; return; end
         p.GRRef=str2double(answer{1});
         p.TdetRef=str2double(answer{2});
            case 'Extract from an analyzed TL'
@@ -7716,7 +7729,8 @@ p.showplot=0; waittime=1;
             saveall(p.dirS);
         end
         refresh(1);
-        hs.UserMess.String=['Reference growth rate: ',num2str(p.GRRef), ' Reference appearance time: ', num2str(p.TdetRef)]; drawnow 
+        hs.UserMess.String=['Reference growth rate: ',num2str(round(p.GRRef,2)),...
+            ' Reference appearance time: ', num2str(round(p.TdetRef,2))]; customdrawnow 
     end %define reference growth parameters
     function LoadRef(~,~)
         done2=0;
@@ -7726,14 +7740,6 @@ p.showplot=0; waittime=1;
             
             if dirUser==0; return; end %user cancelled
             colonies.(c1).dir=dirUser;
-            colonies.(c1).l=dir([colonies.(c1).dir, filesep, '*',p.filextension{1}]); %lists all files with filextension
-            
-            if ~isempty(colonies.(c1).l) %found files
-                for h=1:size(colonies.(c1).l,1)
-                    keep(h)=(colonies.(c1).l(h).name(1)~='.'); %removes all directories and parents (files which start with '.')
-                end
-                colonies.(c1).l=colonies.(c1).l(keep);
-            end
             
             if ~isempty(dir([colonies.(c1).dir, filesep, '*','all','*'])) %found a file containg "all"
                 %             l=colonies.(c1).l; %saving the list variable
@@ -7749,7 +7755,7 @@ p.showplot=0; waittime=1;
                                 a(ii)=datenum(files(ii).date);
                             catch
                                 errordlg(['The date of the file ', files(ii).name, ' in the folder you try to load cannot be read. Please delete that and try again.']);
-                                hs.UserMess.String='Error. Loading cancelled.'; drawnow
+                                hs.UserMess.String='Error. Loading cancelled.'; customdrawnow
                                 return ;
                             end
                         end
@@ -7809,7 +7815,7 @@ p.showplot=0; waittime=1;
         end       
         flist=1:length(p.l);
         maxcol=max(cellfun(@length, p.counts),1);
-        p.estTapp=nan(maxcol(1),length(p.l));
+        p.estTapp=nan(max(maxcol(:,1)),length(p.l));
                 
          choice = questdlg('Would you like to use ',...
         'Which growth rate?','Reference growth rate','Individual colony growth rate','Cancel','Cancel');  
@@ -7827,7 +7833,7 @@ p.showplot=0; waittime=1;
                 for fr=flist
                     for i=1:length(p.counts{fr,2})
                         if isempty(p.GR)
-                           hs.UserMess.String='Please estimate growth rates first';drawnow
+                           hs.UserMess.String='Please estimate growth rates first';customdrawnow
                             return
                         end
                         growthrates=p.GR(p.GR(:,2)==fr,3:end);
@@ -7841,8 +7847,9 @@ p.showplot=0; waittime=1;
          end
          if ~p.disableSave
             saveall(p.dirS);
-        end
-         hs.UserMess.String='Apperance times estimated'; drawnow
+         end
+        ProgressUpdate
+         hs.UserMess.String='Apperance times estimated'; customdrawnow
     end %Tapp estimation
 
 %% Main-TL tab
@@ -7857,14 +7864,14 @@ p.showplot=0; waittime=1;
                             TLRegistration
                        end
                    end
-                  hs.UserMess.String='Registration finished';drawnow
+                  hs.UserMess.String='Registration finished';customdrawnow
                else
                TLRegistration;
                end
            else
                p.counts=p.counts_unregistered;
 %                p.counts_unregistered=cell(length(p.l),2);
-                hs.UserMess.String='Back to unregistered';drawnow
+                hs.UserMess.String='Back to unregistered';customdrawnow
            end
         if ~p.disableSave
             saveall(p.dirS);
@@ -7879,10 +7886,10 @@ p.showplot=0; waittime=1;
             p.i=p.focalframe;
             refresh(0);
         end 
-        hs.UserMess.String='Draw rectangle. Doubleclick to confirm';drawnow  
+        hs.UserMess.String='Draw rectangle. Doubleclick to confirm';customdrawnow  
         h=imrect(); %#ok<IMRECT>
         position = wait(h);
-        hs.UserMess.String='Please wait...';drawnow
+        hs.UserMess.String='Please wait...';customdrawnow
         p.counts(:,1)=p.counts(p.focalframe,1);
         p.counts(:,2)=p.counts(p.focalframe,2);
         p.counts_unregistered=p.counts;
@@ -7910,7 +7917,7 @@ p.showplot=0; waittime=1;
         if ~p.disableSave
             saveall(p.dirS);
         end
-        hs.UserMess.String='Registration finished';drawnow     
+        hs.UserMess.String='Registration finished';customdrawnow     
     end  %actual registration function
     function AutoCenter_Callback(~,~)
         % Fvar.rgb=i90;
@@ -7939,7 +7946,7 @@ p.showplot=0; waittime=1;
         dlg_title = 'Auto correct centers'; num_lines = 1;
         defaultans = {'0', '70', '0', '4', '15', '5'};
         answer = inputdlg(prompt,dlg_title,num_lines,defaultans);
-        if isempty(answer);hs.UserMess.String='';drawnow; return; end %user cancelled
+        if isempty(answer);hs.UserMess.String='';customdrawnow; return; end %user cancelled
         timeList2=round(str2double(answer{2,1}));
         waittime=str2double(answer{3,1});
         range=[round(str2double(answer{4,1})), round(str2double(answer{5,1}))];
@@ -7973,7 +7980,7 @@ p.showplot=0; waittime=1;
         
         %         disableGUI(1);%disable the GUI
         
-        hs.UserMess.String='Center correction ongoing...';drawnow
+        hs.UserMess.String='Center correction ongoing...';customdrawnow
         disableGUI(1);%disable the GUI
         done=0;
         toosmall = [];
@@ -7989,12 +7996,12 @@ p.showplot=0; waittime=1;
 %             p.OlapRem=OlapRembck;
 %         end
         
-        hs.UserMess.String='Please wait, center correction ongoing...';drawnow
+        hs.UserMess.String='Please wait, center correction ongoing...';customdrawnow
         chngList(1,p.i,zeros(size(p.counts{1},1),1));
         
         while ~done
             refresh(0);
-            hs.UserMess.String='Center correction ongoing...';drawnow
+            hs.UserMess.String='Center correction ongoing...';customdrawnow
             if ~isempty(Fvar.background) && ~Fvar.imgenhanced
                 EnhanceImage_Callback
             end
@@ -8004,7 +8011,7 @@ p.showplot=0; waittime=1;
                 img=Fvar.rgb;
             end
             
-            hs.UserMess.String='Center correction ongoing...';drawnow
+            hs.UserMess.String='Center correction ongoing...';customdrawnow
             
             for whichCol=p.colList%for which colonies
 
@@ -8159,7 +8166,7 @@ p.showplot=0; waittime=1;
         end
         refresh(0);
         disableGUI(0);%disable the GUI
-        hs.UserMess.String='All centers corrected!';drawnow
+        hs.UserMess.String='All centers corrected!';customdrawnow
 
         L=readList(1,p.i);L(p.colList)=1;chngList(1,p.i,L);
         if sum(L)>0
@@ -8195,7 +8202,7 @@ p.showplot=0; waittime=1;
         defaultans = {'0', num2str(round(length(p.l)/5*2))};
         
         answer = inputdlg(prompt,dlg_title,num_lines,defaultans);
-        if isempty(answer);hs.UserMess.String='Center correction aborted';drawnow; return; end %user cancelled
+        if isempty(answer);hs.UserMess.String='Center correction aborted';customdrawnow; return; end %user cancelled
         colList1=round(str2num(answer{1,1})); %#ok<ST2NM>
         OK=setpColList(colList1); %this function sets variable p.ColList
         if OK==0; return; end %there was an error in the list
@@ -8324,7 +8331,7 @@ p.showplot=0; waittime=1;
                 
                 hold off;
                 
-                hs.UserMess.String='click to place new center';drawnow
+                hs.UserMess.String='click to place new center';customdrawnow
                 %get colony center
                 if strcmp(p.imgmode, 'rgb') && ~p.BW && ~Fvar.imgenhanced
                     [X1, Y1] = ginput(1);
@@ -8473,25 +8480,25 @@ p.showplot=0; waittime=1;
         end
         disableGUI(0);%disable the GUI
         if strcmp(a, 'save')
-            hs.UserMess.String='Center correction saved';drawnow
+            hs.UserMess.String='Center correction saved';customdrawnow
         else
-            hs.UserMess.String='All centers corrected!';drawnow
+            hs.UserMess.String='All centers corrected!';customdrawnow
         end
     end %manual center correction
     function closecenter_Callback(~,eventdata)
-                hs.UserMess.String='Looking for close centers';drawnow
+                hs.UserMess.String='Looking for close centers';customdrawnow
         pause(1/1000);
         if strcmp(eventdata.EventName, 'KeyPress')
             switch eventdata.Key
                 case 'return'
                     cutoffrad=str2double(get(hs.closecenterinput, 'String')); %get the string in the field
-                    if isempty(cutoffrad);hs.UserMess.String=''; drawnow; return; end %user cancelled
+                    if isempty(cutoffrad);hs.UserMess.String=''; customdrawnow; return; end %user cancelled
                 otherwise
                     return
             end
         elseif strcmp(eventdata.EventName, 'Action')
             cutoffrad=str2double(get(hs.closecenterinput, 'String')); %get the string in the field
-            if isempty(cutoffrad);hs.UserMess.String=''; drawnow; return; end %user cancelled
+            if isempty(cutoffrad);hs.UserMess.String=''; customdrawnow; return; end %user cancelled
         end
         
         chngList(1,p.i,zeros(size(p.RadMean,1),1));
@@ -8504,9 +8511,9 @@ p.showplot=0; waittime=1;
         HighlightCol_Callback();
         L=readList(1,p.i);
         if nansum(L)>0
-            hs.UserMess.String=['Found ', num2str(nansum(L)) ,' colonies less than ',num2str(cutoffrad),' pxl appart, now in list n°-2'];drawnow
+            hs.UserMess.String=['Found ', num2str(nansum(L)) ,' colonies less than ',num2str(cutoffrad),' pxl appart, now in list n°-2'];customdrawnow
         else
-            hs.UserMess.String=['Found no colonies less than ',num2str(cutoffrad),' pxl appart'];drawnow
+            hs.UserMess.String=['Found no colonies less than ',num2str(cutoffrad),' pxl appart'];customdrawnow
         end
     end %detect close centers
     function FindTimeCol_Callback(~,~)
@@ -8570,9 +8577,9 @@ p.showplot=0; waittime=1;
             
             %two different user messages, either for a subset or a complete set
             if length(p.colList)==length((p.counts{p.focalframe,1}))
-                hs.UserMess.String='Started new timelapse analysis';drawnow
+                hs.UserMess.String='Started new timelapse analysis';customdrawnow
             else
-                hs.UserMess.String='Started new subset timelapse analysis';drawnow
+                hs.UserMess.String='Started new subset timelapse analysis';customdrawnow
             end
             
             %else, ask the user if he wants to restart or resume. first do that
@@ -8598,8 +8605,8 @@ p.showplot=0; waittime=1;
                 
             elseif stopped==1 && sum(sum(isnan(p.RadMean))) == numel(p.RadMean) && b.runningBatch==0%that means that only the CalcRadKymo was not called yet. So call the last few lines
                 textMsg=('100% done. Wait a second for the final calculation...');
-                hs.UserMess.String=textMsg; drawnow
-                axes(hs.Progress1); fill([0 0 1 1],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); drawnow
+                hs.UserMess.String=textMsg; customdrawnow
+                axes(hs.Progress1); fill([0 0 1 1],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); customdrawnow
                 text(0.25, 0.2, 'Time points','Fontsize', 10);
                 
                         for whichCol=p.colList
@@ -8610,13 +8617,13 @@ p.showplot=0; waittime=1;
                                 CalcRadKymo2(whichCol);
                             end
                         end
-                hs.UserMess.String='Completed radius calculation.'; drawnow
-                axes(hs.Progress1); fill([0 0 1 1],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); drawnow
+                hs.UserMess.String='Completed radius calculation.'; customdrawnow
+                axes(hs.Progress1); fill([0 0 1 1],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); customdrawnow
                 
                 p.ShowCol=1; p.ShowNr=0; p.showImage=1;p.TLrun=0;
                 textMsg=('Radius calculation finished');
-                hs.UserMess.String=textMsg; drawnow
-                fill([0 0 0 0],[0,1,1,0],[0.5 0.7 0.8],'Parent',hs.Progress1), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); drawnow
+                hs.UserMess.String=textMsg; customdrawnow
+                fill([0 0 0 0],[0,1,1,0],[0.5 0.7 0.8],'Parent',hs.Progress1), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); customdrawnow
                 
                 refresh(0);
                 return
@@ -8630,13 +8637,13 @@ p.showplot=0; waittime=1;
             switch question1
                 case 'Resume'
                     p.timeList=stopped:-1:1;
-                    hs.UserMess.String='Resumed timelapse analysis';drawnow
+                    hs.UserMess.String='Resumed timelapse analysis';customdrawnow
                 case 'Start again'
                     p.RadMean=nan(length((p.counts{p.focalframe,1})), length(p.l)); %same, but will contain mean radii. A matrix is enough
                     Kymo=struct();
                     Kymo.Kymo=cell(length((p.counts{p.focalframe,1})),1);%the kymograph. A cell field per colony
                     p.KymoTrack=zeros(size(p.RadMean));%track if the kymograph was calculated. same size as RadMean
-                    hs.UserMess.String='Started new timelapse analysis';drawnow
+                    hs.UserMess.String='Started new timelapse analysis';customdrawnow
                 case 'Cancel'
                     return
                 case ''
@@ -8672,7 +8679,7 @@ p.showplot=0; waittime=1;
             switch question1
                 case 'Resume'
                     p.timeList=p.timeList(find(p.timeList==stopped):end);%find the index of the last frame and continue to the end of the list
-                    hs.UserMess.String='Resumed timelapse analysis';drawnow
+                    hs.UserMess.String='Resumed timelapse analysis';customdrawnow
                 case 'Start again'
                     if length(p.timeList)==length(p.l)
                         for i1=1:length(p.colList)%reset kymographs
@@ -8687,7 +8694,7 @@ p.showplot=0; waittime=1;
                     p.KymoTrack(p.colList,p.timeList)=0;%reset kymo tracking
                     p.RadMean(p.colList, p.timeList)=0; %and radius
                     
-                    hs.UserMess.String='Started new subset timelapse analysis';drawnow
+                    hs.UserMess.String='Started new subset timelapse analysis';customdrawnow
                 case 'Cancel'
                     return
                 case ''
@@ -8698,7 +8705,7 @@ p.showplot=0; waittime=1;
         
         
         
-        hs.UserMess.String='Please wait. Variables are set up...';drawnow
+        hs.UserMess.String='Please wait. Variables are set up...';customdrawnow
         if p.i==p.focalframe
             p.i=1;
             refresh(0);
@@ -8715,7 +8722,7 @@ p.showplot=0; waittime=1;
                 EnhanceImage_Callback;
             end
         end
-        hs.UserMess.String='Please wait. Variables are set up...';drawnow
+        hs.UserMess.String='Please wait. Variables are set up...';customdrawnow
         p.ShowNr=0; p.BW=0; p.ShowCol=0; p.showImage=0; p.vAA=0; p.TLrun=1;
         p.ShowVoronoiEdges=0; p.ShowVoronoiAreas=0;
         if p.i==p.focalframe
@@ -8742,7 +8749,7 @@ p.showplot=0; waittime=1;
 %         end
         
         tic
-        hs.UserMess.String='starting analysis';drawnow
+        hs.UserMess.String='starting analysis';customdrawnow
         
         %         disableGUI(1);%disable the gui during the TL run
         TimeIdx=1;%index for counting the frames that were already processed
@@ -8756,8 +8763,8 @@ p.showplot=0; waittime=1;
             % telling user how long remains
             a=floor(100*((TimeIdx)/(length(p.timeList))));
             textMsg=([num2str(floor(a)),'% done, est. ' sec2timestr((100*toc/a-toc)), ' remaining']);
-            hs.UserMess.String=textMsg; drawnow
-            fill([0 0 a/100 a/100],[0,1,1,0],[0.5 0.7 0.8],'Parent',hs.Progress1), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); drawnow
+            hs.UserMess.String=textMsg; customdrawnow
+            fill([0 0 a/100 a/100],[0,1,1,0],[0.5 0.7 0.8],'Parent',hs.Progress1), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); customdrawnow
             %             text(0.25, 0.5, 'Time points','Fontsize', 10,'Parent',hs.Progress1);
             
             %only save to the HD every 10 frames
@@ -8790,14 +8797,14 @@ p.showplot=0; waittime=1;
         saveall(p.dirS);
         p.KymoChanged=0;
         textMsg=('100% done. Wait a second for the final calculation...');
-        hs.UserMess.String=textMsg; drawnow
-        fill([0 0 1 1],[0,1,1,0],[0.5 0.7 0.8],'Parent',hs.Progress1), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); drawnow
+        hs.UserMess.String=textMsg; customdrawnow
+        fill([0 0 1 1],[0,1,1,0],[0.5 0.7 0.8],'Parent',hs.Progress1), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); customdrawnow
         text(0.25, 0.2, 'Time points','Fontsize', 10, 'Parent',hs.Progress1);
         
         p.ShowCol=1; p.ShowNr=0; p.showImage=1; p.vAA; p.TLrun=0;
         disableGUI(0);%enable the GUI again
         
-        fill([0 0 0 0],[0,1,1,0],[0.5 0.7 0.8],'Parent',hs.Progress1), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); drawnow
+        fill([0 0 0 0],[0,1,1,0],[0.5 0.7 0.8],'Parent',hs.Progress1), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); customdrawnow
         
         set_frame(length(p.l));
         pause(0.01);
@@ -8820,7 +8827,7 @@ p.showplot=0; waittime=1;
         
         disableGUI(0);%disable the GUI
         refresh(0);
-        hs.UserMess.String='Radius calculation finished'; drawnow
+        hs.UserMess.String='Radius calculation finished'; customdrawnow
         
     end %intialize the TL run
     function mat2grayRef(~,~)
@@ -9214,8 +9221,8 @@ p.showplot=0; waittime=1;
             
             if (indx==1) || mod(indx,5)==0
                 a=(indx/(length(p.colList)));
-                fill([0 0 a a],[0,1,1,0],[0.5 0.7 0.8],'parent', hs.Progress2); set(hs.Progress2,'Xlim',[0 1],'Ylim',[0 1],'Xcolor','none','Ycolor','none'); drawnow
-                text(0.25, 0.5, ['analysed ' num2str(indx) ' of ' num2str(length(p.colList)) ' colonies'],'Fontsize', 10, 'parent', hs.Progress2);drawnow
+                fill([0 0 a a],[0,1,1,0],[0.5 0.7 0.8],'parent', hs.Progress2); set(hs.Progress2,'Xlim',[0 1],'Ylim',[0 1],'Xcolor','none','Ycolor','none'); customdrawnow
+                text(0.25, 0.5, ['analysed ' num2str(indx) ' of ' num2str(length(p.colList)) ' colonies'],'Fontsize', 10, 'parent', hs.Progress2);customdrawnow
             end
             
             indx=indx+1;
@@ -9480,7 +9487,7 @@ p.showplot=0; waittime=1;
                      (isfield(k, 'fig1') && ishandle(k.fig1))
                 showkymocalc2(whichCol)
              else
-                 hs.UserMess.String='Display closed, please wait for calculations to finish...';drawnow
+                 hs.UserMess.String='Display closed, please wait for calculations to finish...';customdrawnow
              end
          end
                 
@@ -9619,7 +9626,7 @@ p.showplot=0; waittime=1;
                 set(gcf, 'units','normalized','outerposition',[0. 0. 1 1])%make it fullscreen (imshow resets that all the time...)x
             end
             catch
-                hs.UserMess.String='Display closed, please wait for calculations to finish...';drawnow
+                hs.UserMess.String='Display closed, please wait for calculations to finish...';customdrawnow
             end
         end
     end %calculate the actual kymograph and radius, Edge method
@@ -9631,7 +9638,7 @@ p.showplot=0; waittime=1;
     L=readList(2,0);
     failed=L;
     redo=0;
-    hs.UserMess.String='Please wait...';drawnow
+    hs.UserMess.String='Please wait...';customdrawnow
     for rep=1:2
     for whichCol=p.colList
            A=p.RadMean(whichCol,:);
@@ -9701,7 +9708,7 @@ p.showplot=0; waittime=1;
     if ~p.disableSave
         saveall(p.dirS);
     end
-    hs.UserMess.String=['List -2: ', num2str(sum(L)), ' out of ' num2str(length(L)), ' colonies need correction'];drawnow
+    hs.UserMess.String=['List -2: ', num2str(sum(L)), ' out of ' num2str(length(L)), ' colonies need correction'];customdrawnow
     disableGUI(0);%disable the GUI
     if sum(failed)>0
         msgbox(['Something is wrong with the kymographs of colonies ', num2str(p.colList(failed)),'. Please re-run time-lapse analysis for these'],'Corrupt kymographs')
@@ -9740,7 +9747,7 @@ p.showplot=0; waittime=1;
         defaultans = {'0'};
         
         answer = inputdlg(prompt,dlg_title,num_lines,defaultans);
-        if isempty(answer);hs.UserMess.String='';drawnow; return; end %user cancelled
+        if isempty(answer);hs.UserMess.String='';customdrawnow; return; end %user cancelled
         
         colList1=round(str2num(answer{1,1})); %#ok<ST2NM>
         OK=setpColList(colList1); %this function sets variable p.ColList
@@ -9967,20 +9974,20 @@ p.showplot=0; waittime=1;
                 if k.abort.Value
                     p.RadMean=RadMeanBCK;
                     close(k.fig1);
-                    hs.UserMess.String='Correction aborted'; drawnow
+                    hs.UserMess.String='Correction aborted'; customdrawnow
                     return
                 end
                 if k.save.Value
                     saveall(p.dirS);
                     close(k.fig1);
-                    hs.UserMess.String='Correction saved'; drawnow
+                    hs.UserMess.String='Correction saved'; customdrawnow
                     return
                 end
             end
         end
                 try close(k.fig1); catch; end
                 saveall(p.dirS);
-                hs.UserMess.String='Correction saved'; drawnow
+                hs.UserMess.String='Correction saved'; customdrawnow
                 return
         if ix>length(p.colList)
             close(k.fig1);
@@ -9989,7 +9996,7 @@ p.showplot=0; waittime=1;
         
         saveall(p.dirS);
         refresh(0);
-        hs.UserMess.String='Correction finished'; drawnow
+        hs.UserMess.String='Correction finished'; customdrawnow
         
         function globalswitch(~,~)
             if k.globalsw.Value
@@ -10190,14 +10197,14 @@ p.showplot=0; waittime=1;
             end
             if isempty(p.RadMean)==1; errordlg('Please run timelapse analysis first'); return; end %timelapse done?
             if isempty(p.umConversion) || sum(isnan(p.umConversion))>0
-                hs.UserMess.String='The reference for pixel to um conversion is missing!';drawnow
+                hs.UserMess.String='The reference for pixel to um conversion is missing!';customdrawnow
                 return
             end
         end
         %calculate Rad in um
         RadUmCalc;
         disableGUI(1);%disable the GUI
-        hs.UserMess.String='Variables are set up, please wait...'; drawnow
+        hs.UserMess.String='Variables are set up, please wait...'; customdrawnow
         if ~isfield(p, 'RdetThreshPx')
             p.RdetThreshPx=10; %detection threshold in pxl
         end
@@ -10340,7 +10347,7 @@ p.showplot=0; waittime=1;
 
         
         % final display for which colonies the Tdap calculation failed
-        hs.UserMess.String='Appearance time calculation finished!'; drawnow
+        hs.UserMess.String='Appearance time calculation finished!'; customdrawnow
         if ~b.runningBatch
             if ~isempty(p.TdetErrors)
                 msgbox(['Appearance time calculation for colonies: ', num2str(p.TdetErrors),' failed.'])
@@ -10348,6 +10355,167 @@ p.showplot=0; waittime=1;
         end
         disableGUI(0);%disable the GUI
     end %Tapp calculation
+    function Intensity_TL_Callback(~,~)
+        
+%         3 ways to scale intensity: internal min-max from first and last
+%         images; manual providing min max values or no scaling
+        q = questdlg('Scale intensity with internal min-max, manual min-max or no scaling?','','Internal', 'Manual', 'None', 'Internal');
+        switch q
+            case 'Internal'
+                scl=1;
+                mn=0;
+            case 'None'
+                scl=0;
+                mn=0;
+            case 'Manual'
+                scl=1;
+                mn=1;
+            case ''
+                return
+        end
+        q = questdlg('S aureus or S pneumoniae?','','aureus', 'pneumoniae', 'Cancel', 'aureus');
+        switch q
+            case 'aureus'
+                aureus=1;
+            %         calculate structuring element for tophat filtering of image based
+            %         on the biggest circle on the image
+                    se = strel('disk',ceil(max(p.counts{length(p.l),2})*1.15));
+            case 'pneumoniae'
+                aureus=0;
+            case 'Cancel'
+                return
+            case ''
+                return
+        end
+        
+%         for the moment, plate AOI is required
+        if isempty(p.AAr)
+            errordlg('Please delimit Area of interest (Plate detection) before using this function');
+            return
+        end
+        hs.UserMess.String='Please wait...';customdrawnow
+        
+
+        
+%         read last image, transform to grayscale, tophat filtering
+        frend = imread([p.dir, '/',p.l(length(p.l)).name]); 
+        fr1s=customcol2gray(frend);     
+        if aureus
+            fr1s=imtophat(fr1s, se);
+        else
+            fr1s=imcomplement(fr1s);
+        end
+        
+        
+
+%         Get pixel index values for the AOI filtering
+        imageSizeY = size(fr1s,1);
+        imageSizeX = size(fr1s,2);
+        [columnsInImage, rowsInImage] = meshgrid(1:imageSizeX, 1:imageSizeY);
+        radius=p.AAr(1)+10;
+
+        centerY = p.AAc(1,2);
+        centerX = p.AAc(1,1);
+        circlePixels = (rowsInImage - centerY).^2 ...
+            + (columnsInImage - centerX).^2 <= radius.^2;
+
+% define internal min/max as 0.1% and 99.9% quantiles
+        mat2grayRef=[NaN, NaN];
+        mat2grayRef(1) = quantile(fr1s(circlePixels), 0.001);
+        mat2grayRef(2) = quantile(fr1s(circlePixels), 0.999);
+        
+%         if manual scaling: ask user for the min/max. Defaults as the
+%         internal min/max
+        if mn
+            dlg_title = 'Min-max scaling'; num_lines = 1;
+            prompt = {'Minimal intensity', 'Maximal intensity'};
+
+            defaultans = {num2str(mat2grayRef(1)), num2str(mat2grayRef(2))};
+            answer = inputdlg(prompt,dlg_title,num_lines,defaultans);
+            if isempty(answer);hs.UserMess.String='';customdrawnow; return; end
+            mat2grayRef(1)=str2double(answer{1});
+            mat2grayRef(2)=str2double(answer{2});
+        end
+
+
+% read in 1st image, do transformations
+        fr1 = imread([p.dir, '/',p.l(1).name]); %to substract
+        fr1s=customcol2gray(fr1);
+        if aureus
+            fr1s=imtophat(fr1s, se);
+        else
+            fr1s=imcomplement(fr1s);
+        end
+        
+        
+        
+%         if internal scaling: edit min/max from last image if
+%         smaller/bigger on 1st image
+        if scl && ~mn
+            if quantile(fr1s(circlePixels), 0.001)<mat2grayRef(1)
+                mat2grayRef(1) = quantile(fr1s(circlePixels), 0.001);
+            end
+            if quantile(fr1s(circlePixels), 0.999)>mat2grayRef(2)
+                mat2grayRef(2) = quantile(fr1s(circlePixels), 0.999);
+            end
+        end
+        
+        % subset to AOI only
+        fr1s = fr1s(circlePixels);
+
+% scaling
+        fr1s=mat2gray(fr1s, mat2grayRef);
+%         and divide sum of pixel intensity by nr pixel inside AOI
+        fr1s=sum(fr1s)/sum(circlePixels(:));
+        
+%         initialize loop over all frames
+        p.dif=NaN(length(p.l),1);
+        TimeIdx=1;
+        tic %timing
+        for i=1:length(p.l)
+            hs.UserMessFrame.String=['frame ',num2str(i), ' of ', num2str(length(p.l))];
+            
+%             read frame, transform to grayscale, tophat filtering
+            fr = imread([p.dir, '/',p.l(i).name]);
+            fr = customcol2gray(fr);
+            if aureus
+                fr=imtophat(fr, se);
+            else
+                fr=imcomplement(fr);
+            end
+            
+            
+%             if scaling, scale intensity
+            if scl
+                fr = mat2gray(fr, mat2grayRef);
+            end
+%             subset for AOI only
+            fr = fr(circlePixels);
+%             final value
+            dif = (sum(fr)/sum(circlePixels(:))-fr1s);
+            p.dif(i) = dif;
+            
+            
+            
+            % telling user how long remains
+            a=floor(100*((TimeIdx)/(length(p.l))));
+            textMsg=([num2str(floor(a)),'% done, est. ' sec2timestr((100*toc/a-toc)), ' remaining']);
+            hs.UserMess.String=textMsg; customdrawnow
+            fill([0 0 a/100 a/100],[0,1,1,0],[0.5 0.7 0.8],'Parent',hs.Progress1), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none'); customdrawnow
+            
+            TimeIdx=TimeIdx+1;
+
+        end
+%         save .csv file
+        writematrix([p.dif,((1:p.deltaTmin:length(p.l)*p.deltaTmin)/60)'],[p.dirS,filesep, 'NormalizedIntensity+Time.csv'],'Delimiter',';')
+
+        refresh(0);
+        saveall(p.dirS);
+        hs.UserMess.String='Intensity vector saved.';customdrawnow
+       figure; plot(p.dif);  title('Increase of pixel intensity');
+       xlabel('Time (frame)'); ylabel('Average intensity increase per pixel');
+       
+    end %intensity TL
 
 %% Visualize tab:
     function SizeDist_Callback(~,~) 
@@ -10358,7 +10526,7 @@ p.showplot=0; waittime=1;
             if isempty(p.counts); errodlg('Please detect colonies'); return; end
                 ftoplot= UserChoiceFrames('plot');
                 if isempty(ftoplot)% the user canceled ,abort
-                hs.UserMess.String='';drawnow 
+                hs.UserMess.String='';customdrawnow 
                 return;
                 end    
             ftoplot=sort(unique(ftoplot)); 
@@ -10803,7 +10971,7 @@ p.showplot=0; waittime=1;
     function multiEPplot_Callback(~,~)
         flist= UserChoiceFrames('plot');
         if isempty(flist)% the user canceled ,abort
-        hs.UserMess.String='';drawnow 
+        hs.UserMess.String='';customdrawnow 
         return;
         end    
         if length(flist)>1
@@ -10823,12 +10991,12 @@ p.showplot=0; waittime=1;
             if isempty(p.(['counts',num2str(1)]){fr,2})
                 if length(flist)==1
                     try close(epf); catch; end
-                   hs.UserMess.String='No sequence data for this frame loaded';drawnow
+                   hs.UserMess.String='No sequence data for this frame loaded';customdrawnow
                     return
                 else
                     
                     keepfr(fr)=false;
-                    hs.UserMess.String='Sequence data for at least one frame is missing';drawnow
+                    hs.UserMess.String='Sequence data for at least one frame is missing';customdrawnow
                     continue
                 end
             end
@@ -10886,16 +11054,30 @@ p.showplot=0; waittime=1;
         if sum(size(p.l))==0; errordlg('please load a image series'); return; end %image loaded?
         %val=CheckVariableOnFrames(p.umConversion,'spatial calibration factor', ftoplot);
         %if val~=0; return;end    
-        if isempty(p.RadMean)==1; errordlg('Please run timelapse analysis first'); return; end %timelapse done?
-        if isempty(p.Tdet)==1; errordlg('Please estimate appearance time first'); return; end %timelapse done?
+        if strcmp(p.mode, 'TL')
+            if isempty(p.RadMean)==1; errordlg('Please run timelapse analysis first'); return; end %timelapse done?
+            if isempty(p.Tdet)==1; errordlg('Please determine appearance time first'); return; end %timelapse done?
+            if isempty(p.TdetCalibrated)
+                toplot=p.Tdet;
+            else
+                toplot=p.TdetCalibrated;
+            end
+        else
+            if isempty(p.estTapp)==1; errordlg('Please estimate appearance time first first'); return; end %timelapse done?
+            toplot=-2;
+            frame=-2;
+            for i=1:length(p.l)
+                temp=p.estTapp(~isnan(p.estTapp(:,i)),i);
+                toplot(end+1:end+length(temp))=temp;
+                frame(end+1:end+length(temp))=i;
+            end
+            toplot=toplot(2:end);
+            frame=frame(2:end);
+        end
         
         figure; hold on;
         
-        if isempty(p.TdetCalibrated)
-            toplot=p.Tdet;
-        else
-            toplot=p.TdetCalibrated;
-        end
+        
         
         histbar=linspace(floor(min(toplot)*0.95), ceil(max(toplot)*1.05), p.NumHistSlice);
 
@@ -10923,7 +11105,7 @@ p.showplot=0; waittime=1;
         else
             flist= UserChoiceFrames('plot');
             if isempty(flist)% the user canceled ,abort
-            hs.UserMess.String='';drawnow 
+            hs.UserMess.String='';customdrawnow 
             return;
             end    
             if length(flist)>1
@@ -10953,11 +11135,11 @@ p.showplot=0; waittime=1;
                 if isempty(p.(['counts',num2str(1)]){fr,2})
                     if length(flist)==1
                         try close(epf); catch; end
-                       hs.UserMess.String='No sequence data for this frame loaded';drawnow
+                       hs.UserMess.String='No sequence data for this frame loaded';customdrawnow
                         return
                     else
 %                         keepfr(fr)=false;
-                        hs.UserMess.String='Sequence data for at least one frame is missing';drawnow
+                        hs.UserMess.String='Sequence data for at least one frame is missing';customdrawnow
                         continue
                     end
                 end
@@ -11113,7 +11295,7 @@ p.showplot=0; waittime=1;
                     [X1, Y1] =  ginputCustom(1);
                 end
                 if X1<1 || Y1<1 || X1>size(Fvar.rgb,2) || Y1>size(Fvar.rgb,1)
-                    hs.UserMess.String=''; drawnow
+                    hs.UserMess.String=''; customdrawnow
                     return
                 end
             else
@@ -11172,7 +11354,7 @@ p.showplot=0; waittime=1;
             return
         end
         if isempty(p.umConversion) || sum(isnan(p.umConversion))>0
-            hs.UserMess.String='The spatial calibration factor is missing!';drawnow
+            hs.UserMess.String='The spatial calibration factor is missing!';customdrawnow
             return
         end
         
@@ -11262,6 +11444,7 @@ p.showplot=0; waittime=1;
                 hs.TimeLapseTab.Parent=[];
             elseif strcmp(p.mode, 'TL')
                 hs.SITab.Parent=[];
+                set(hs.IntensityTL, 'BackgroundColor', hs.btnCol.green1, 'Enable', 'on');
             end
         end
         
@@ -11322,6 +11505,10 @@ p.showplot=0; waittime=1;
                 set(hs.registration,'Enable', 'off');
             else
             end
+        end
+        
+        if ~strcmp(p.mode, 'TL') & ~isempty(p.estTapp)
+            set(hs.TappDist, 'BackgroundColor', hs.btnCol.green1, 'Enable', 'on');
         end
         
         if p.progress.TLrun
@@ -11505,6 +11692,14 @@ p.showplot=0; waittime=1;
         p.timeList=fliplr(timeList2);%all frames list
         p.abortParent=0;
     end %set list of colonies and time
+    function customdrawnow(~,~)
+        drawnow
+        if isprop(hs.fig, 'Toolbar')
+            hs.fig.Toolbar.Visible = 'off';
+            hs.Progress1.Toolbar.Visible = 'off';
+            hs.Progress2.Toolbar.Visible = 'off';
+        end
+    end
 
 %% functions from external sources
     function imgzoompan(hfig, varargin)
@@ -12893,7 +13088,7 @@ end %this function calculates the bounded voronoi tesselation
         
         % Get figure
         fig = gcf;
-        drawnow;
+        customdrawnow;
         figure(gcf);
         
         % Make sure the figure has an axes
@@ -12906,7 +13101,7 @@ end %this function calculates the bounded voronoi tesselation
         % completion, closing of figure errors or ctrl+c.
         c = onCleanup(@() restoreFcn(initialState));
         
-        drawnow
+        customdrawnow
         char = 0;
         
         while how_many ~= 0
@@ -12974,7 +13169,7 @@ end %this function calculates the bounded voronoi tesselation
                     continue
                 end
                 
-                drawnow;
+                customdrawnow;
                 pt = get(axes_handle, 'CurrentPoint');
                 how_many = how_many - 1;
                 
@@ -13028,7 +13223,7 @@ end %this function calculates the bounded voronoi tesselation
         catch %#ok<CTCH>
             waserr = 1;
         end
-        drawnow;
+        customdrawnow;
         if(waserr == 1)
             set(h,'Accelerator','C');                          % Set back the accelerator if it errored out.
             error(message('MATLAB:ginput:Interrupted'));
