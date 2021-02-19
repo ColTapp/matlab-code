@@ -4,6 +4,7 @@ function ColTapp_beta
 % suppress some warnings
 %#ok<*AGROW>
 %#ok<*HIST>
+warning('OFF','MATLAB:hg:uicontrol:ValueMustBeInRange');
 
 Fvar=struct(); %those are variables with fixed values in the software
 saveV='-v7';
@@ -25,9 +26,9 @@ Fvar.csvdelimiters={'comma','semicolon', 'tab', 'space', 'colon'};
 Fvar.csvdelimiterssymbol={',',';', '	', ' ', ':'};
 Fvar.imgextsion={'jpg','jpeg', 'png', 'bmp', 'tiff', 'tif','JPG','JPEG','PNG','BMP','TIFF','TIF'};
 %% New figure
-hs.f = figure('units','norm','Position',[0.2 0.15 0.8*Fvar.figscale 0.8], 'KeyPressFcn', @WindowKeyPressFcn,...
+hs.f = figure('units','norm','Position',[0.1 0.1 0.8*Fvar.figscale 0.8], 'KeyPressFcn', @WindowKeyPressFcn,...
     'MenuBar', 'none', 'NumberTitle', 'off','HandleVisibility','on', ...
-    'Name', 'ColTapp beta', 'ToolBar', 'none');
+    'Name', 'ColTapp v1.0', 'ToolBar', 'none');
 
 Layoutcomponents;
 mO=struct();mouseOvers;
@@ -452,7 +453,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         b.batchFile=[]; %this will contain a list of folders to analyse (all files therein)
         
         %for timelapse analysis
-        p.Zonesize=1.15;%how big is the area around colony for analysis. Fixed parameter, set to 15% of 
+        p.Zonesize=1.15;%how big is the area around colony for analysis. Fixed parameter, set to 15% of col rad
         p.tres=128; % # of grid points for theta coordinate (change to needed binning)
         p.colList=[]; %which col to analyse
         p.timeList=[];%which times to analyse
@@ -773,9 +774,9 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             end
         end
         
-        if ~isempty(dir([p.dir, filesep, '*','all','*'])) %found a file countaing "all"
+        if ~isempty(dir([p.dir, filesep, '*','all.mat','*'])) %found a file countaing "all"
             l=p.l; %saving the list variable
-            files=dir([p.dir, filesep, '*','all','*']);
+            files=dir([p.dir, filesep, '*','all.mat','*']);
             a=nan(length(files),1);
             for ii=1:length(files)%copy the date of each file to a vector to be able to run max on it
                 
@@ -1588,14 +1589,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             
             hold off
         end
-        
 
         if p.iold~=p.i || p.iold==-1000 %changing the original picture, keep initial zoom at max
             orig.h = hs.fig;
             orig.XLim = hs.fig.XLim;
             orig.YLim = hs.fig.YLim;
-        end
-        
+        end     
         %resetting the previous zoom
         if strcmp(p.mode, 'TL')
             if ~isempty(xlim) && z==1  %if image are independant, no zoom is kept
@@ -1618,15 +1617,15 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         try %displaying the colonies per frame if in single mode or for each frame the same number if in TL mode
             if strcmp(p.mode, 'single') && ~isempty(p.counts{p.i})
-                hs.UserMessNumCol.String= [num2str(length(p.counts{p.i,2})) ' colonies on image']; customdrawnow
+                hs.UserMessNumCol.String= [num2str(length(p.counts{p.i,2})) ' colonies on image']; 
             elseif strcmp(p.mode, 'single') && isempty(p.counts{p.i})
-                hs.UserMessNumCol.String= ''; customdrawnow
+                hs.UserMessNumCol.String= ''; 
             elseif strcmp(p.mode, 'TL') && ~isempty(p.counts{p.i})
-                hs.UserMessNumCol.String= [num2str(length(p.counts{p.i,2})) ' colonies on timelapse']; customdrawnow
+                hs.UserMessNumCol.String= [num2str(length(p.counts{p.i,2})) ' colonies on timelapse']; 
             elseif strcmp(p.mode, 'TL') && ~isempty(p.counts{p.focalframe})
-                hs.UserMessNumCol.String= [num2str(length(p.counts{p.focalframe,2})) ' colonies on timelapse']; customdrawnow
+                hs.UserMessNumCol.String= [num2str(length(p.counts{p.focalframe,2})) ' colonies on timelapse']; 
             elseif strcmp(p.mode, 'TL') && isempty(p.counts{p.focalframe})
-                hs.UserMessNumCol.String= ''; customdrawnow
+                hs.UserMessNumCol.String= ''; 
             end
         catch %do nothing
         end
@@ -1649,15 +1648,16 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 end
             end
         end
-        set(hs.ListSelect, 'String',p.UserLists.listOptions);customdrawnow;
+        set(hs.ListSelect, 'String',p.UserLists.listOptions);
         if isfield(hs,'ListSelect2') 
             if isvalid(hs.ListSelect2) %this is in the options menu, it should not enter
-                set(hs.ListSelect2, 'String',p.UserLists.listOptions);customdrawnow;
+                set(hs.ListSelect2, 'String',p.UserLists.listOptions);
             end
         end
         set(hs.f, 'MenuBar', 'none', 'NumberTitle', 'off','HandleVisibility','on', ...
             'Name', 'ColTapp beta', 'ToolBar', 'none');
         figure(hs.f) %setting main gui to gcf
+        customdrawnow
 
     end %refresh what is shown to user
     function saveall(dirS) 
@@ -2167,12 +2167,13 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             if ~isempty(a)  % list is not empty
                 viscircles(p.counts{p.i,1}(a,:),p.counts{p.i,2}(a,:)*p.apR,'Color',[0.75 0.1 0.8]); %plot the colony circle
             else 
-                hs.UserMess.String='The list is empty'; customdrawnow
+                hs.UserMess.String='The list is empty'; 
+%                 p.showlist=0;
             end
         else
             p.showlist=0;
             set (hs.ShowList, 'String', 'Show')
-            hs.UserMess.String='No list selected'; customdrawnow
+            hs.UserMess.String='No list selected'; 
         end
     end %highlight colonies in list
     function a=activeList()
@@ -2226,7 +2227,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         % spatial metrics
         D=Choices.TickValues(strcmp(Choices.Ticklist,'D'));
         D2=Choices.TickValues(strcmp(Choices.Ticklist,'D2'));
-        AD=Choices.TickValues(strcmp(Choices.Ticklist,'D2'));
+        AD=Choices.TickValues(strcmp(Choices.Ticklist,'AD'));
         if D||D2||AD % at least one spatial metric is asked for
                 hs.UserMess.String='Calculating distance metrics...';customdrawnow
                 CalcSpatialMetricsD(Frames,Colonies,UM,D,D2,AD); %calculated and stored in p.D, etc
@@ -2251,7 +2252,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         
         % append all exported needs
         for exportN=2:numel(Choices.TickValues) %over all ticks
-            if Choices.TickValues(exportN) %the user wants an export
+            if Choices.TickValues(exportN) %the user wants at least 1 export
                 mtrx=WhichTableExport(Choices.Ticklist{exportN},Choices,Frames,Colonies,UM); %make an export table
                 mtrxAll=[mtrxAll,mtrx]; %append to previous
             end
@@ -2710,9 +2711,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         %Making variable names
         titlesL={};
         for Li=1:sum(FirstL=='L')
-            Ln=p.UserLists.listOptions{Li+1}(4:end);
-            Ln(Ln==' ')='_';
-            titlesL=[titlesL,Ln];
+            if whichList(Li)
+                Ln=p.UserLists.listOptions{Li+1}(4:end);
+                Ln(Ln==' ')='_';
+                titlesL=[titlesL,Ln];
+            end
         end
         
         %initialize
@@ -2856,22 +2859,6 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             mtrx=table(repmat({[Name ' need to be calculated prior to export']},nblines,1),'VariableNames',{Varname});
         end
     end
-    function T=removeTableNans(T)
-        % see
-        % https://stackoverflow.com/questions/45753690/writetable-replace-nan-with-blanks-in-matlab
-        for name = T.Properties.VariableNames
-            temp = num2cell(T.(name{1})); 
-            for j=1:size(temp,2)
-                for i=1:size(temp,1)
-                    if strcmp(temp{i, j},'NaN') || isnan(temp{i, j})
-                        temp{i, j}={[]};
-                    end
-                end
-            end
-            T.(name{1})=temp;
-        end
-        
-    end %replace nans with empty cell
     function CalcSpatialMetricsD(WhFr,WhCol,UM,D,D2,AD)
         % calculates the spatial metrics
         % this will only calculate the ones needed for frames
@@ -2929,7 +2916,6 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end %for each frame       
     end %calculate spatial metrics
     function ExportColorsData (frames,cols2,choices)
-        
         %creates color and shape variables from colonies as asked in
         %whichcalc is a 1x6 vector which values are 1 to calculate the metrics in names:
         whichcalc=choices.TickValues(find(strcmp(choices.Ticklist,'RGBw')):end);
@@ -2940,52 +2926,89 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         
         %  1{'RGBw'} 2{'RGBc'} 3{'GRAYw'} 4{'GRAYc'} 5{'TxtStd'} 6{'TxtEnt'} 7{'Pstd'} 8{'Pl'} 9{'Hrgb'} 10{'Hgray'}
         maketitlsColors(whichcalc,size(Fvar.rgb,3)); %create titles for the matrix
-        dispi=0;
+        dispi=-1; tic; totcol=0;
         for fr=frames
             dispi=dispi+1; 
-            if dispi/10==round(dispi/10) 
-                hs.UserMess.String=['Calculating shape/color metrics (' num2str(100*dispi/numel(frames),2) '%)'];customdrawnow
-            end
+%             if dispi/1==round(dispi/1) 
+%                 hs.UserMess.String=['Calculating shape/color metrics (' num2str(100*dispi/numel(frames),2) '%)'];customdrawnow
+%             end
             img = imread([p.dir, filesep,p.l(fr).name]); %loading pic
             if sum(whichcalc([3:8,10]))>=1 %at least one needs a gray image
                 im=getgray(img); 
-            end
+            end 
             cols=cols2(cols2<=numel(p.counts{fr,2})); %in not TL, this is needed because not all frames have same number of colonies
+            
+            % create a meshgrid for colony masks
+            [xDim,yDim] = size(img,1:2);
+            [xx,yy] = meshgrid(1:yDim,1:xDim);
+            mask0 = false(xDim,yDim); 
+            
+            dispic=-1;
             for col=cols
+                
+                % this can be long, user message
+                dispic=dispic+1; totcol=totcol+1;
+                if totcol/5==round(totcol/5)
+                tmn=toc;
+                timeElapsed=floor(tmn);
+                percDone=round((numel(cols)*dispi+dispic)/(numel(cols)*numel(frames))*100);
+                remT=floor((1-percDone/100)*timeElapsed/percDone*100);
+                mess=sec2timestr(remT);
+                txtMsg= [num2str(floor(percDone)), '% done; Estimated ',mess, ' remain' ]; customdrawnow
+                axes(hs.Progress1); fill([0 0 percDone/100 percDone/100],[0,1,1,0],[0.5 0.7 0.8]), set(hs.Progress1,'Xlim',[0 1],'Ylim',[0 1], 'Xcolor','none','Ycolor','none');customdrawnow %#ok<LAXES>
+                text(0.25, 0.5, txtMsg,'Fontsize', 14);customdrawnow
+                end
+                
+                %uodate col and frame in table
                 p.coloniesColors.Tbl(end+1,1)=col; colm=1;
                 colm=colm+1;p.coloniesColors.Tbl(end,colm)=fr; 
                 
+                % extract a smaller image before binarization. Then find edges
+                    center=[round(p.counts{fr,1}(col,2)),round(p.counts{fr,1}(col,1))]; %contains the centers of colonies
+                    Zone=ZoneDef(center,col,im,fr);
+                    mini_img=img(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone,:); % 3 colors
+                   
+                    if sum(whichcalc([3:8,10]))>=1 %at least one needs a gray image
+                        mini_im=im(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone); % 3 colors
+                    end
+                    
+                   % create a meshgrid for colony masks
+                   [mini_xDim,mini_yDim] = size(mini_img,[1,2]);
+                   [mini_xx,mini_yy] = meshgrid(1:mini_yDim,1:mini_xDim);
+                   mini_mask0 = false(mini_xDim,mini_yDim);
+                    
                 % measures with mask of whole colony
                 if sum(whichcalc([1,3,5,6]))
-                    maskColW=createCirclesMask(img,p.counts{fr,1}(col,:),p.counts{fr,2}(col));
+                    maskColW=createCirclesMask(mini_img,round(size(mini_img)/2),p.counts{fr,2}(col),mini_xx,mini_yy, mini_mask0);
                 end
                 if sum(whichcalc([2,4])) % "colony center" based mask
-                    maskColC=createCirclesMask(img,p.counts{fr,1}(col,:),5);
+                    exportCenterRadius=5;
+                    maskColC=createCirclesMask(mini_img,round(size(mini_img)/2),exportCenterRadius,mini_xx,mini_yy, mini_mask0);
                 end
                 
                 if whichcalc(1) %MeanColVal
                     for dim=1:size(img,3)
-                        a=img(:,:,dim);
+                        a=mini_img(:,:,dim);
                         colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(a(maskColW==1),'all');
                     end
                 end 
                 if whichcalc(2) % center color Val
                     for dim=1:size(img,3)
-                        a=img(:,:,dim);
+                        a=mini_img(:,:,dim);
                         colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(a(maskColC==1),'all');
                     end
                 end
                 if whichcalc(3) %MeangrayVal
-                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(im(maskColW));
+                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(mini_im(maskColW));
                 end
                 if whichcalc(4) %Center grey Val
-                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(im(maskColC));
+                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(mini_im(maskColC));
                 end
                 if whichcalc(5) % Std Val
-                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanstd(double(im(maskColW)));
+                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanstd(double(mini_im(maskColW)));
                 end
                 if whichcalc(6) %Entropy Val
-                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=entropy(im(maskColW));
+                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=entropy(mini_im(maskColW));
                 end
                 
                 if sum(whichcalc(7:10)) %affected by other colonies touching
@@ -2995,15 +3018,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     AlphaSum=0;
                     % we want to calculate the angle of the arc of interaction between colonies
                     if sum(tooclose(:))>0 %if colonies touch
-                        for touchCi=find(tooclose)
+                        for touchCi=find(tooclose) %over all touching colonies
                             d=dist(touchCi); r1=p.counts{fr,2}(col); r2=p.counts{fr,2}(touchCi);
                             if r2>dist %the colony is fully engulfed
                                 alpha=2*pi;
                             else
-                                %the angle of interaction is calculated
-                                %from the r1,r2,d triangle, where
-                                %cos(angle/2) is easy to get using
-                                %al-Kashi's theorem
+                                %the angle of interaction is calculated from the r1,r2,d triangle, where cos(angle/2) is calculated using al-Kashi's theorem
                                 alpha=rad2deg(2*acos((r1^2+d^2-r2^2)/(2*r1*d)));
                             end
                             AlphaSum=AlphaSum+alpha;
@@ -3013,18 +3033,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 end
                 
                 if sum(whichcalc(7:8)) %perimeters needs an edge calc
-                    % extract a smaller image before binarization. Then find edges
-                    center=[round(p.counts{fr,1}(col,2)),round(p.counts{fr,1}(col,1))]; %contains the centers of colonies
-                    Zone=ZoneDef(center,col,im,fr);
-                    mini_im=im(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone,:); % 3 colors
-                    %mini_im2=img(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone,: %used to extract images
-                    %mini_im=getSmallImage(col,im); %didn't work in that context
-                   
+                    % binarize the small image
                     binim=imbinarize(mini_im); edgim=edge(binim);
                     
                     % create a bigger mask than the colony to remove potential other objects, remove edges
-                    maskColB=createCirclesMask(mini_im,round(size(mini_im)/2),p.counts{fr,2}(col)*1.1);
-                    edgim(~maskColB)=0; %remove the edges that are not within colsize
+                    maskColB=createCirclesMask(mini_img,round(size(mini_img)/2),p.counts{fr,2}(col)*1.1,mini_xx,mini_yy, mini_mask0);
+                    edgim(~maskColB)=0; %remove the edges that are not within 10% of colsize
                     
 %                     if sum(tooclose(:))>0 %if colonies touch
 %                         for touchCi=find(tooclose)
@@ -3032,13 +3046,12 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
 %                             edgim(maskOthercol)=0; %remove colony from pic
 %                         end
 %                     end
-                    
                 end
                 
                 if whichcalc(7) %perimeter std
                     [row,column] = find(edgim); %get the valid pixels
                     if ~isempty(row)
-                        distP=pdist2(round(size(mini_im)/2),[row,column],'euclidean');
+                        distP=pdist2(round(size(mini_img,[1,2])/2),[row,column],'euclidean');
                         colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanstd(distP(:));
                     else %no perimeter found
                         colm=colm+1;p.coloniesColors.Tbl(end,colm)=nan;
@@ -3049,19 +3062,35 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 end
                 
                 if sum(whichcalc(9:10)) % halo based
-                    HS=getHalosize(choices,p.counts{fr,2}(col));
-                    maskColH=createCirclesMask(im,p.counts{fr,1}(col,:),p.counts{fr,2}(col)+HS);
-                    maskCol=createCirclesMask(im,p.counts{fr,1}(col,:),p.counts{fr,2}(col));
-                    maskCol=maskColH-maskCol;
-                    imH=im;imgH=img;
-                    if sum(tooclose(:))>0 %if colonies touch
+                    if sum(tooclose(:))==0 %no colonies touch, we use a small image
+                        HS=getHalosize(choices,p.counts{fr,2}(col)); % This halo is in pixels
+                        
+                        if (HS+p.counts{fr,2}(col))>(size(mini_img,1)/2) % the small image is smaller than rad+Halo
+                            Zone=p.counts{fr,2}(col)+HS+2;
+                            mini_img=img(center(1)-Zone:center(1)+Zone,center(2)-Zone:center(2)+Zone,:); % 3 colors
+                            
+                            % create a meshgrid for colony masks
+                            [mini_xDim,mini_yDim] = size(mini_img,[1,2]);
+                            [mini_xx,mini_yy] = meshgrid(1:mini_yDim,1:mini_xDim);
+                            mini_mask0 = false(mini_xDim,mini_yDim);
+                        end
+                        maskColH=createCirclesMask(mini_im,round(size(mini_img)/2),p.counts{fr,2}(col)+HS,mini_xx,mini_yy, mini_mask0);
+                        maskCol=createCirclesMask(mini_im,round(size(mini_img)/2),p.counts{fr,2}(col),mini_xx,mini_yy, mini_mask0);
+                        maskCol=maskColH-maskCol;
+                        imH=getgray(mini_img);imgH=mini_img;
+                    else %if colonies touch, we use the whole picture
+                        maskColH=createCirclesMask(img,p.counts{fr,1}(col,:),p.counts{fr,2}(col)+HS,xx,yy, mask0);
+                        maskCol=createCirclesMask(img,p.counts{fr,1}(col,:),p.counts{fr,2}(col),xx,yy, mask0);
+                        maskCol=maskColH-maskCol;
+                        
+                        imH=im; imgH=img;
                         for touchCi=find(tooclose)
-                            maskOthercol=createCirclesMask(im,p.counts{fr,1}(touchCi,:),p.counts{fr,2}(touchCi));
+                            maskOthercol=createCirclesMask(img,p.counts{fr,1}(touchCi,:),p.counts{fr,2}(touchCi),xx,yy, mask0);
                             imH(maskOthercol)=nan; %remove colony from pic
-                            imgH(repmat(maskOthercol,[1,1,size(img,3)]))=nan; %same in rgb 
+                            imgH(repmat(maskOthercol,[1,1,size(img,3)]))=nan; %same in rgb
                         end
                     end
-                end              
+                end
                 if whichcalc(9) %Halo, rgb
                     for dim=1:size(img,3)
                         a=imgH(:,:,dim);
@@ -3142,8 +3171,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             im=img;
         end
     end %get grayimage
-    function mask = createCirclesMask(varargin)
-        % retrieve from MAtlab central
+    function mask = createCirclesMask(~,centers, radii, xx, yy, mask)
+        % adapted from MAtlab central
         % Brett Shoelson (2020). createCirclesMask.m (https://www.mathworks.com/matlabcentral/fileexchange/47905-createcirclesmask-m), MATLAB Central File Exchange. Retrieved April 27, 2020.
         % xDim,yDim,centers,radii)
         % Create a binary mask from circle centers and radii
@@ -3176,21 +3205,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         
         % Copyright 2014 The MathWorks, Inc.
         
-        narginchk(3,3)
-        if numel(varargin{1}) == 2
-            % SIZE specified
-            xDim = varargin{1}(1);
-            yDim = varargin{1}(2);
-        else
-            % IMAGE specified
-            [xDim,yDim] = size(varargin{1});
-        end
-        centers = varargin{2};
-        radii = varargin{3};
+        %[xDim,yDim] = size(im);
         xc = centers(:,1);
         yc = centers(:,2);
-        [xx,yy] = meshgrid(1:yDim,1:xDim);
-        mask = false(xDim,yDim);
+        %[xx,yy] = meshgridMat(1:yDim,1:xDim);
+        % mask = false(xDim,yDim);
         for ii = 1:numel(radii)
             mask = mask | hypot(xx - xc(ii), yy - yc(ii)) <= radii(ii);
         end
@@ -3260,7 +3279,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         else % in end point image mode
             if numfr==0 %all lists
                 for fr=1:size(p.counts,1) %one list is needed for each frame
-                    p.UserLists.l.(lname).(['fr',num2str(fr)])=L;
+                    p.UserLists.l.(lname).(['fr',num2str(fr)])=zeros(length(p.counts{fr,2}),1);
                 end
             else
                 p.UserLists.l.(lname).(['fr',num2str(numfr)])=L;
@@ -6767,6 +6786,7 @@ p.showplot=0; waittime=1;
         in=inpolygon(p.centers(:,1),p.centers(:,2),xi,yi); %all cells in polygon
         catch
             hs.UserMess.String='';customdrawnow
+            return
         end
         if InOut
             in=~in;
@@ -7011,6 +7031,10 @@ p.showplot=0; waittime=1;
         in=click_Colony; %adding a colony by clicking on it
         if sum(in)==0 %no colony was selected, use polygon mode
             [~,xi,yi]=roipoly(); %user inputs a polygon
+            if length(xi)<2
+                hs.UserMess.String='';customdrawnow
+                return
+            end
             in=inpolygon(p.centers(:,1),p.centers(:,2),xi,yi); %all cols in polygon
         end
         
@@ -7058,10 +7082,10 @@ p.showplot=0; waittime=1;
             frameList=p.focalframe;
             if ~isempty(p.VoronoiAreas)
                 cellfun(@isempty,p.VoronoiAreas(p.focalframe))
-                warning=questdlg('The Voronoi was already calculated',...
+                warningDLG=questdlg('The Voronoi was already calculated',...
                     'Voronoi already calculated', ...
                     'Recalculate','Cancel','Cancel');
-                switch warning
+                switch warningDLG
                     case 'Cancel'
                         return;
                     case 'Recalculate'
@@ -7106,10 +7130,10 @@ p.showplot=0; waittime=1;
                         text1=[num2str(length(which)),' of'];
                         text2=[': frames ', num2str(frameList(which(1:end)))];
                     end
-                    warning=questdlg(['The Voronoi was already calculated on ',text1,' these frames', text2],...
+                    warning2=questdlg(['The Voronoi was already calculated on ',text1,' these frames', text2],...
                         'Voronoi already calculated', ...
                         'Recalculate for all anyway','Cancel','Cancel');
-                    switch warning
+                    switch warning2
                         case 'Cancel'
                             return;
                         case 'Recalculate for all anyway'
@@ -10356,7 +10380,12 @@ p.showplot=0; waittime=1;
         disableGUI(0);%disable the GUI
     end %Tapp calculation
     function Intensity_TL_Callback(~,~)
-        
+
+        %         for the moment, plate AOI is required
+        if isempty(p.AAr)
+            errordlg('Please delimit Area of interest (Plate detection) before using this function');
+            return
+        end
 %         3 ways to scale intensity: internal min-max from first and last
 %         images; manual providing min max values or no scaling
         q = questdlg('Scale intensity with internal min-max, manual min-max or no scaling?','','Internal', 'Manual', 'None', 'Internal');
@@ -10376,6 +10405,9 @@ p.showplot=0; waittime=1;
         q = questdlg('S aureus or S pneumoniae?','','aureus', 'pneumoniae', 'Cancel', 'aureus');
         switch q
             case 'aureus'
+                if isempty(p.counts{length(p.l),2})
+                    errordlg('Please add 1 cicle');return
+                end
                 aureus=1;
             %         calculate structuring element for tophat filtering of image based
             %         on the biggest circle on the image
@@ -10387,23 +10419,24 @@ p.showplot=0; waittime=1;
             case ''
                 return
         end
-        
-%         for the moment, plate AOI is required
-        if isempty(p.AAr)
-            errordlg('Please delimit Area of interest (Plate detection) before using this function');
-            return
-        end
+        disableGUI(1)
+
         hs.UserMess.String='Please wait...';customdrawnow
         
 
         
 %         read last image, transform to grayscale, tophat filtering
         frend = imread([p.dir, '/',p.l(length(p.l)).name]); 
-        fr1s=customcol2gray(frend);     
+        fr1s = customcol2gray(frend);   
+        
         if aureus
             fr1s=imtophat(fr1s, se);
         else
-            fr1s=imcomplement(fr1s);
+%             fr1s=imcomplement(fr1s);
+            frbeg = imread([p.dir, '/',p.l(1).name]); 
+            frbeg = customcol2gray(frbeg);   
+            frbeg = imgaussfilt(frbeg, 10);
+            fr1s = fr1s - frbeg;
         end
         
         
@@ -10444,7 +10477,8 @@ p.showplot=0; waittime=1;
         if aureus
             fr1s=imtophat(fr1s, se);
         else
-            fr1s=imcomplement(fr1s);
+%             fr1s=imcomplement(fr1s);
+            fr1s = fr1s - frbeg;
         end
         
         
@@ -10481,7 +10515,8 @@ p.showplot=0; waittime=1;
             if aureus
                 fr=imtophat(fr, se);
             else
-                fr=imcomplement(fr);
+                fr = fr - frbeg;
+%                 fr=imcomplement(fr);
             end
             
             
@@ -10507,10 +10542,13 @@ p.showplot=0; waittime=1;
 
         end
 %         save .csv file
-        writematrix([p.dif,((1:p.deltaTmin:length(p.l)*p.deltaTmin)/60)'],[p.dirS,filesep, 'NormalizedIntensity+Time.csv'],'Delimiter',';')
-
+        writematrix([p.dif,((1:p.deltaTmin:length(p.l)*p.deltaTmin)/60)'],...
+            [p.dirS,filesep,p.dirS(p.del(end)+1:end), '.csv'],'Delimiter',...
+            Fvar.csvdelimiterssymbol{p.csvdelimiter});
+        
         refresh(0);
         saveall(p.dirS);
+        disableGUI(0)
         hs.UserMess.String='Intensity vector saved.';customdrawnow
        figure; plot(p.dif);  title('Increase of pixel intensity');
        xlabel('Time (frame)'); ylabel('Average intensity increase per pixel');
@@ -11507,7 +11545,7 @@ p.showplot=0; waittime=1;
             end
         end
         
-        if ~strcmp(p.mode, 'TL') & ~isempty(p.estTapp)
+        if ~strcmp(p.mode, 'TL') & ~isempty(p.estTapp) %#ok<AND2>
             set(hs.TappDist, 'BackgroundColor', hs.btnCol.green1, 'Enable', 'on');
         end
         
