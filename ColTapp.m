@@ -1,4 +1,4 @@
-function ColTapp_beta
+function ColTapp_v1_1
 %% initializing the interface
 
 % suppress some warnings
@@ -28,7 +28,8 @@ Fvar.imgextsion={'jpg','jpeg', 'png', 'bmp', 'tiff', 'tif','JPG','JPEG','PNG','B
 %% New figure
 hs.f = figure('units','norm','Position',[0.1 0.1 0.8*Fvar.figscale 0.8], 'KeyPressFcn', @WindowKeyPressFcn,...
     'MenuBar', 'none', 'NumberTitle', 'off','HandleVisibility','on', ...
-    'Name', 'ColTapp v1.0', 'ToolBar', 'none');
+    'Name', 'ColTapp v1.1', 'ToolBar', 'none');
+removeToolbarExplorationButtons(hs.f);
 
 Layoutcomponents;
 mO=struct();mouseOvers;
@@ -168,7 +169,6 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         hs.btnCol.green1=[0.4490    0.8588    0.5922]; %main buttons
         hs.btnCol.green2=[0.5071    0.9216    0.5078]; %load etc buttons
         
-            
         % Cutting main units
         hs.main=uix.VBoxFlex('Parent', hs.f,'Padding',0, 'Spacing', 10); % whole box, separed into two units: 1) TopLayer and 2) BottomLayer
         hs.TopLayer=uix.HBox('Parent',hs.main); %1
@@ -1561,6 +1561,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             if p.overlayIMGstatus==1
                 Fvar.imOverlay=imshow((Fvar.rgbOverlay),'InitialMagnification', 40);
                 set(Fvar.imOverlay,'AlphaData',0.5);
+                ax = gca();
+                ax.Toolbar.Visible = 'off';
             end
         end
         
@@ -1814,13 +1816,13 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             hs.InterfaceObj6=findobj(hs.FigPanBig,'Enable','on');
             hs.InterfaceObj7=findobj(hs.SITabBox,'Enable','on');
             
-            set(hs.InterfaceObj1,'Enable','inactive');
-            set(hs.InterfaceObj2,'Enable','inactive');
-            set(hs.InterfaceObj3,'Enable','inactive');
-            set(hs.InterfaceObj4,'Enable','inactive');
-            set(hs.InterfaceObj5,'Enable','inactive');
-            set(hs.InterfaceObj6,'Enable','inactive');
-            set(hs.InterfaceObj7,'Enable','inactive');
+            try; set(hs.InterfaceObj1,'Enable','inactive'); catch; end
+            try; set(hs.InterfaceObj2,'Enable','inactive'); catch; end
+            try; set(hs.InterfaceObj3,'Enable','inactive'); catch; end
+            try; set(hs.InterfaceObj4,'Enable','inactive'); catch; end
+            try; set(hs.InterfaceObj5,'Enable','inactive'); catch; end
+            try; set(hs.InterfaceObj6,'Enable','inactive'); catch; end
+            try; set(hs.InterfaceObj7,'Enable','inactive'); catch; end
         else
 %             hs.InterfaceObj1=findobj(hs.DetectTabBox,'Enable','inactive');
 %             hs.InterfaceObj2=findobj(hs.ResultsTabBox,'Enable','inactive');
@@ -1829,13 +1831,13 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
 %             hs.InterfaceObj5=findobj(hs.NavigatePics,'Enable','inactive');
 %             hs.InterfaceObj6=findobj(hs.FigPanBig,'Enable','inactive');
             
-            set(hs.InterfaceObj1,'Enable','on');
-            set(hs.InterfaceObj2,'Enable','on');
-            set(hs.InterfaceObj3,'Enable','on');
-            set(hs.InterfaceObj4,'Enable','on');
-            set(hs.InterfaceObj5,'Enable','on');
-            set(hs.InterfaceObj6,'Enable','on');
-            set(hs.InterfaceObj7,'Enable','on');
+            try; set(hs.InterfaceObj1,'Enable','on'); catch; end
+            try; set(hs.InterfaceObj2,'Enable','on'); catch; end
+            try; set(hs.InterfaceObj3,'Enable','on'); catch; end
+            try; set(hs.InterfaceObj4,'Enable','on'); catch; end
+            try; set(hs.InterfaceObj5,'Enable','on'); catch; end
+            try; set(hs.InterfaceObj6,'Enable','on'); catch; end
+            try; set(hs.InterfaceObj7,'Enable','on'); catch; end
             
         if p.i==1
             set(hs.LeftButton, 'BackgroundColor', hs.btnCol.gray, 'Enable', 'inactive');
@@ -1990,7 +1992,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             else%or normal
                 Fvar.im=imshow((Fvar.rgb),'InitialMagnification', 40);
             end
-            
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
         end
     end%fnc called by refresh for the loading and display of image.
 
@@ -4233,6 +4236,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 imshow(s{xii});  %axis square %#ok<*UNRCH>
                 title(['Opt. ',num2str(xii) ,a(xii)]);
                 impos=impos+1;
+                ax = gca;
+                ax.Toolbar.Visible = 'off';
             end
             
             %done, ask user which method he wants
@@ -4539,6 +4544,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 
                 axes(hs.fig); set(hs.fig, 'Color', [0.8 0.9 0.8], 'Visible', 'off', 'Xcolor', 'none','Ycolor', 'none','Position', [0 0 1 1]); %#ok<LAXES> %creating axes in it
                 imshow(rgbcolG) ; axis square %#ok<*UNRCH>
+                ax = gca;
+                ax.Toolbar.Visible = 'off';
                 hold on
                 viscircles([X0,Y0],p.RadMean(whichCol,p.i),'Color','r'); %show the circle of the colony
                 
@@ -5009,6 +5016,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         %reading and displaying the picture, getting data from p
         colC.rgb = imread([p.dir, filesep,p.l(p.focalframe).name]);
         colC.AxesPic=imshow(colC.rgb);
+        ax = gca;
+        ax.Toolbar.Visible = 'off';
         colC.colsXY=p.counts{p.focalframe,1}; %getting the colonies values
         colC.colsR=p.counts{p.focalframe,2};
         colC.colsR2=p.counts{p.focalframe,2};
@@ -5124,6 +5133,8 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         end
         function refreshColR
             colC.AxesPic=imshow(colC.rgb);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             if isfield(colC,'colsR2') %a correction was issued
             viscircles(colC.colsXY,colC.colsR2,'Color','b');
             else
@@ -6263,6 +6274,8 @@ p.showplot=0; waittime=1;
             %     display all initial circles if p.showplot in red
        if p.showplot 
         imshow(crp2); hold on
+        ax = gca;
+        ax.Toolbar.Visible = 'off';
         title(['c',num2str(i)])
         viscircles(c1,r11, 'Color','r'); 
         for ii=1:length(r11)
@@ -7547,9 +7560,9 @@ p.showplot=0; waittime=1;
         p.flist=flist;
         for frms=flist
             p.i=frms;
-            if size(p.counts{frms,1},1)==0
-                continue
-            end
+%             if size(p.counts{frms,1},1)==0
+%                 continue
+%             end
 %         get grayscale image
         
 %         i2 -> get 2 points for each image
@@ -7572,6 +7585,8 @@ p.showplot=0; waittime=1;
                 else
                     Fvar.im=imshow(Fvar.rgb);
                 end
+                ax = gca;
+                ax.Toolbar.Visible = 'off';
                 [X1, Y1] =  ginputCustom(1);
                         if X1<1 || Y1<1 || X1>size(Fvar.rgb,2) || Y1>size(Fvar.rgb,1)
                             hs.UserMess.String=''; customdrawnow
@@ -7603,6 +7618,8 @@ p.showplot=0; waittime=1;
                          overgray=customcol2gray(overgray);
                 end
                 Fvar.im=imshow(overgray);
+                ax = gca;
+                ax.Toolbar.Visible = 'off';
                 [X1, Y1] =  ginputCustom(1);
 
                 if X1<1 || Y1<1 || X1>size(overgray,2) || Y1>size(overgray,1)
@@ -8065,6 +8082,8 @@ p.showplot=0; waittime=1;
                 
                 if waittime>0
                     hs.fig = imshow(rgbcolG) ; axis square %#ok<*UNRCH>
+                    ax = gca;
+                    ax.Toolbar.Visible = 'off';
                     hold on
                     viscircles(c1,r1,'Color','r'); %plot the colony circle
                 end
@@ -8323,7 +8342,8 @@ p.showplot=0; waittime=1;
                 
                 
                 hs.fig= imshow(rgbcolG) ; axis square %#ok<*UNRCH>
-                
+                ax = gca;
+                ax.Toolbar.Visible = 'off';
                 hold on
                 
                 scatter(X0,Y0,500,'+');%add the center as +
@@ -9537,18 +9557,24 @@ p.showplot=0; waittime=1;
             % pos=pos+1;
             axes(ha(pos));
             imshow(adjgrayImage);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') imadjust'], 'FontSize', fontSize, 'Interpreter', 'None');
 
             pos=pos+1;
             axes(ha(pos));
             imshow(wienergrayImage);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') wiener2'], 'FontSize', fontSize, 'Interpreter', 'None');
 
             pos=pos+1;
             axes(ha(pos)); 
             imshow(filtim);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') pillbox filter'], 'FontSize', fontSize, 'Interpreter', 'None');
 
@@ -9561,12 +9587,16 @@ p.showplot=0; waittime=1;
             pos=pos+1;
             axes(ha(pos)); 
             imshow(canynedge);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') edge, canny'], 'FontSize', fontSize, 'Interpreter', 'None');
 
             pos=pos+1;
             axes(ha(pos)); 
             imshow(noisered);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') remove noise'], 'FontSize', fontSize, 'Interpreter', 'None');
 
@@ -9579,29 +9609,39 @@ p.showplot=0; waittime=1;
             pos=pos+1;
             axes(ha(pos));
             imshow(rmhoriz);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') remove horizontal lines'], 'FontSize', fontSize, 'Interpreter', 'None');
 
             pos=pos+1;
             axes(ha(pos));
             imshow(closedimg);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') morph closing, line'], 'FontSize', fontSize, 'Interpreter', 'None');
 
             pos=pos+1;
             axes(ha(pos));
             imshow(closedimg2);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') morph closing, disk'], 'FontSize', fontSize, 'Interpreter', 'None');
 
             pos=pos+1;
             axes(ha(pos));
             imshow(mask);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             title([num2str(pos),') mask for activecontour'], 'FontSize', fontSize, 'Interpreter', 'None');
 
             pos=pos+1;
             axes(ha(pos));
             imshow(actcont);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             title([num2str(pos),') activecontour'], 'FontSize', fontSize, 'Interpreter', 'None');
 
             pos=pos+1;
@@ -9612,6 +9652,8 @@ p.showplot=0; waittime=1;
             pos=pos+1;
             axes(ha(pos));
             imshow(closedimg3);
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') morph closing, disk'], 'FontSize', fontSize, 'Interpreter', 'None');
 
@@ -9624,12 +9666,16 @@ p.showplot=0; waittime=1;
             pos=pos+1;
             axes(ha(pos));
             imshow(openBW)
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') morph open (small disk)'], 'FontSize', fontSize, 'Interpreter', 'None');
 
             pos=pos+1;
             axes(ha(pos));
             imshow(bigBW)
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') keep object left bottom'], 'FontSize', fontSize, 'Interpreter', 'None');
 
@@ -9637,6 +9683,8 @@ p.showplot=0; waittime=1;
             axes(ha(pos));
             grayImage=imrotate(Kymo.Kymo{whichCol}, 90);
             imshow(grayImage);%display the kymograp
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             axis on;
             title([num2str(pos),') Kymo ' num2str(whichCol), ', radius'], 'FontSize', fontSize, 'Interpreter', 'None');
             hold on
@@ -9925,7 +9973,8 @@ p.showplot=0; waittime=1;
             else
                 p.RdetThreshUm=round(p.RdetThreshPx*nanmean(p.umConversion));
             end
-            
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             plot(1:length(p.RadMean(whichCol,:)),size(Kymo.Kymo{whichCol},2)-repmat(p.RdetThreshPx,length(p.RadMean(whichCol,:)),1), 'Color','b','Linewidth', 0.5);
             plot(1:length(p.RadMean(whichCol,:)), size(Kymo.Kymo{whichCol},2)-p.RadMean(whichCol,:)*sqrt(2), 'g', 'LineWidth',1.5);%plot the radius
             hold off
@@ -10189,6 +10238,8 @@ p.showplot=0; waittime=1;
             cla(k.fig); axis off;
             k.fig=axes('Parent', k.kymo, 'Color', [0.8 0.9 0.8], 'Visible', 'off', 'Xcolor', 'none','Ycolor', 'none','Position', [0 0 1 1]); 
             imshow(imrotate((Kymo.Kymo{whichCol}), 90));hold on; axis on
+            ax = gca;
+            ax.Toolbar.Visible = 'off';
             plot(1:length(p.RadMean(whichCol,:)),size(Kymo.Kymo{whichCol},2)-repmat(p.RdetThreshPx,length(p.RadMean(whichCol,:)),1), 'Color','b','Linewidth', 0.5);
             plot(1:length(p.RadMean(whichCol,:)), size(Kymo.Kymo{whichCol},2)-p.RadMean(whichCol,:)*sqrt(2), 'r', 'LineWidth',1.5);%plot the radius
             hold off
@@ -11732,13 +11783,31 @@ p.showplot=0; waittime=1;
     end %set list of colonies and time
     function customdrawnow(~,~)
         drawnow
-        if isprop(hs.fig, 'Toolbar')
-            hs.fig.Toolbar.Visible = 'off';
-            hs.Progress1.Toolbar.Visible = 'off';
-            hs.Progress2.Toolbar.Visible = 'off';
+        try
+            if isprop(hs.fig, 'Toolbar')
+                hs.fig.Toolbar.Visible = 'off';
+            end
+            if isprop(hs.Progress1, 'Toolbar')
+                hs.Progress1.Toolbar.Visible = 'off';
+            end
+            if isprop(hs.Progress2, 'Toolbar')
+                hs.Progress2.Toolbar.Visible = 'off';
+            end
+        catch
         end
     end
-
+    function val = nansum(vect)
+        vect = vect(~isnan(vect));
+        val = sum(vect);
+    end
+    function val = nanmean(vect)
+        vect = vect(~isnan(vect));
+        val = mean(vect);
+    end
+    function val = nanmedian(vect)
+        vect = vect(~isnan(vect));
+        val = median(vect);
+    end
 %% functions from external sources
     function imgzoompan(hfig, varargin)
         % imgzoompan provides instant mouse zoom and pan
@@ -13650,5 +13719,6 @@ return
         end
         ha = ha(:);
     end %For image registration
+
 end 
    
