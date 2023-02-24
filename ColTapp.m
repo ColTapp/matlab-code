@@ -25,6 +25,7 @@ end
 Fvar.csvdelimiters={'comma','semicolon', 'tab', 'space', 'colon'};
 Fvar.csvdelimiterssymbol={',',';', '	', ' ', ':'};
 Fvar.imgextsion={'jpg','jpeg', 'png', 'bmp', 'tiff', 'tif','JPG','JPEG','PNG','BMP','TIFF','TIF'};
+
 %% New figure
 hs.f = figure('units','norm','Position',[0.1 0.1 0.8*Fvar.figscale 0.8], 'KeyPressFcn', @WindowKeyPressFcn,...
     'MenuBar', 'none', 'NumberTitle', 'off','HandleVisibility','on', ...
@@ -613,7 +614,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         p.dirS=p.dir; %same for that
         p.del=strfind(p.dirS,filesep); %looking for delimiter in folder name
         %check if the type of the image set is already defined
-        if isempty(p.mode) || ((sum(strcmp(p.mode,'single'))==0)&&(sum(strcmp(p.mode,'TL'))==0))
+        if isempty(p.mode) || ((sum(strcmp(p.mode,'single'), 'omitnan')==0)&&(sum(strcmp(p.mode,'TL'), 'omitnan')==0))
             p.definedWhat=0;
         end
         
@@ -1640,7 +1641,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
         
         % refresh the lists names
         for lname=1:(length(p.UserLists.listOptions)-2)
-            if nansum(readList(lname,p.i))==0
+            if sum(readList(lname,p.i))==0
                 if ~isempty(strfind(p.UserLists.listOptions{lname},' (E)'))
                     p.UserLists.listOptions{lname}=[p.UserLists.listOptions{lname},' (E)'];
                 end
@@ -2895,7 +2896,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                     distances2(distances>di)=nan;
                     %calculate densities
                     colm=colm+1;
-                    d2=nansum(1./(distances2.^2));d=nansum(1./(distances2));
+                    d2=sum(1./(distances2.^2));d=sum(1./(distances2));
                     if D2;p.D2(end-numel(WhCol2)+1:end,colm)=d2(WhCol2); end%sum of 1/D^2
                     if D;p.D(end-numel(WhCol2)+1:end,colm)=d(WhCol2); end %sum of 1/D^2
                     
@@ -2903,14 +2904,14 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                         % calculate angular diameters, which depends on radii
                         if strcmp(p.mode,'TL') && ~isempty(p.RadMean)
                             if size(distances2,2)==numel(p.RadMean(:,Fri))
-                                allAD=nansum(2*atan(UM(Fri)*p.RadMean(:,Fri)./(2*distances2)),2)';
+                                allAD=sum(2*atan(UM(Fri)*p.RadMean(:,Fri)./(2*distances2)),2)';
                             else
                                 allAD=nan(size(distances2,2),1);
                             end
                         elseif strcmp(p.mode,'TL') && isempty(p.RadMean)
-                            allAD=nansum(2*atan(UM(Fri)*p.counts{p.focalframe,2}./(2*distances2)),2)';%angular diam from frame
+                            allAD=sum(2*atan(UM(Fri)*p.counts{p.focalframe,2}./(2*distances2)),2)';%angular diam from frame
                         else
-                            allAD=nansum(2*atan(UM(Fri)*p.counts{Fri,2}./(2*distances2)),2)';%angular diam
+                            allAD=sum(2*atan(UM(Fri)*p.counts{Fri,2}./(2*distances2)),2)';%angular diam
                         end
                         p.AD(end-numel(WhCol2)+1:end,colm)=allAD(WhCol2);
                     end
@@ -2992,20 +2993,20 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 if whichcalc(1) %MeanColVal
                     for dim=1:size(img,3)
                         a=mini_img(:,:,dim);
-                        colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(a(maskColW==1),'all');
+                        colm=colm+1;p.coloniesColors.Tbl(end,colm)=mean(a(maskColW==1),'all', 'omitnan');
                     end
                 end 
                 if whichcalc(2) % center color Val
                     for dim=1:size(img,3)
                         a=mini_img(:,:,dim);
-                        colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(a(maskColC==1),'all');
+                        colm=colm+1;p.coloniesColors.Tbl(end,colm)=mean(a(maskColC==1),'all', 'omitnan');
                     end
                 end
                 if whichcalc(3) %MeangrayVal
-                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(mini_im(maskColW));
+                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=mean(mini_im(maskColW), 'omitnan');
                 end
                 if whichcalc(4) %Center grey Val
-                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(mini_im(maskColC));
+                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=mean(mini_im(maskColC), 'omitnan');
                 end
                 if whichcalc(5) % Std Val
                     colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanstd(double(mini_im(maskColW)));
@@ -3097,11 +3098,11 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                 if whichcalc(9) %Halo, rgb
                     for dim=1:size(img,3)
                         a=imgH(:,:,dim);
-                        colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(a(maskCol==1),'all');
+                        colm=colm+1;p.coloniesColors.Tbl(end,colm)=mean(a(maskCol==1),'all', 'omitnan');
                     end
                 end
                 if whichcalc(10) %Halo, gray
-                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=nanmean(imH(maskCol==1));
+                    colm=colm+1;p.coloniesColors.Tbl(end,colm)=mean(imH(maskCol==1), 'omitnan');
                 end
             end
            
@@ -3452,7 +3453,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                             tic;
                             FindTimeCol_Callback;
                             b.comptime(i)=toc;
-                            b.meanrad(i)=nanmean(p.counts{p.focalframe,2});
+                            b.meanrad(i)=mean(p.counts{p.focalframe,2}, 'omitnan');
                             b.Ncol(i)=length(p.counts{p.focalframe,2});
                             b.Nframes(i)=length(p.l);
                             if verLessThan('Matlab','9.2')
@@ -3511,7 +3512,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                             b.summary(i)=1;
                             b.comptime(i)=toc;
                             if strcmp(p.mode, 'TL')
-                                b.meanrad(i)=nanmean(p.counts{p.focalframe,2});
+                                b.meanrad(i)=mean(p.counts{p.focalframe,2}, 'omitnan');
                                 b.Ncol(i)=length(p.counts{p.focalframe,2});
                             else
                                 allc=[];
@@ -3521,7 +3522,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
                                     Ncol=Ncol+length(p.counts{nfr,2});
                                 end
                                 b.Ncol(i)=Ncol;
-                                b.meanrad(i)=nanmean(allc);
+                                b.meanrad(i)=mean(allc, 'omitnan');
                             end
                             b.Nframes(i)=length(p.l);
                             if verLessThan('Matlab','9.2')
@@ -4866,7 +4867,7 @@ hs.firstLoad=1;%for the load button. if the user open a new set, the complete la
             return
         end
         L=readList(-activeList,0);
-        if nansum(L)==0
+        if sum(L)==0
             hs.text=text(0.5,0.95,'Active list is empty', 'Units', 'Normalized','HorizontalAlignment','center');
             plot(p.RadMean');%plot raw data
             return
@@ -6228,8 +6229,8 @@ p.showplot=0; waittime=1;
 %         vls(i,1)=graythresh(crp);
         vls(i,2)=quantile(crp(:), 0.6);
    end
-%    mnv=nanmean(vls(:,1)); %average graythresh value
-   mxv=nanmean(vls(:,2)); %average 60% quantile value
+%    mnv=mean(vls(:,1)); %average graythresh value
+   mxv=mean(vls(:,2), 'omitnan'); %average 60% quantile value
    
    % range of circles to look for
    range=[p.minRadN, p.maxRadN];
@@ -6672,7 +6673,7 @@ p.showplot=0; waittime=1;
             if ~TLrunAdd
                 r = norm([h.XData(1) - X1 h.YData(2) - Y1]); %circle coordinates are in h object
             else
-                r = nanmedian(p.radii);
+                r = median(p.radii, 'omitnan');
             end
         catch
             hs.UserMess.String=''; customdrawnow
@@ -7840,7 +7841,7 @@ p.showplot=0; waittime=1;
     end %load from folder
     function av=AverageRef(parameter)
         if strcmp(p.refMode, 'Mean')
-           av=nanmean(parameter);
+           av=mean(parameter, 'omitnan');
         else
            av=quantile(parameter,p.quantileV);
         end
@@ -8213,7 +8214,7 @@ p.showplot=0; waittime=1;
 
         L=readList(1,p.i);L(p.colList)=1;chngList(1,p.i,L);
         if sum(L)>0
-            errordlg(['Auto center correction for ', num2str(nansum(L)),...
+            errordlg(['Auto center correction for ', num2str(sum(L)),...
                 ' colonies failed or moved them too close to another colony. ',...
                 'Please use manual correction for these. You can access all these with list -1'])
         end
@@ -8554,8 +8555,8 @@ p.showplot=0; waittime=1;
         end
         HighlightCol_Callback();
         L=readList(1,p.i);
-        if nansum(L)>0
-            hs.UserMess.String=['Found ', num2str(nansum(L)) ,' colonies less than ',num2str(cutoffrad),' pxl appart, now in list n°-2'];customdrawnow
+        if sum(L)>0
+            hs.UserMess.String=['Found ', num2str(sum(L)) ,' colonies less than ',num2str(cutoffrad),' pxl appart, now in list n°-2'];customdrawnow
         else
             hs.UserMess.String=['Found no colonies less than ',num2str(cutoffrad),' pxl appart'];customdrawnow
         end
@@ -9231,7 +9232,7 @@ p.showplot=0; waittime=1;
                     if sum(isnan(Zinterp(:,1)))>0.9*size(Zinterp,1) %if more than 95% removed, do not use that
                         Zinterp=Zbck;
                     end
-                    %                 figure; plot(nanmean(Zinterp),'b'); hold on; plot(nanmean(Zbck),'r'); title(num2str(whichCol));
+                    %                 figure; plot(mean(Zinterp),'b'); hold on; plot(mean(Zbck),'r'); title(num2str(whichCol));
                     clear Zbck;
                     clear theta4Zinterp;
                 else
@@ -9247,17 +9248,17 @@ p.showplot=0; waittime=1;
                 p.KymoTrack(whichCol,p.i)=1;
             end
             
-            Kymo.Kymo{whichCol}(p.i,:)=nanmean(Zinterp);%store that in the kymograph
+            Kymo.Kymo{whichCol}(p.i,:)=mean(Zinterp, 'omitnan');%store that in the kymograph
             p.KymoTrack(whichCol,p.i)=1;%track which colony and frame combinations were done already for resume purpose
             
-            %             ff=figure;
-            %             imagesc(Zinterp); hold on;
-            %             title(['ColNr ',num2str(whichCol)]);
-            %             pause(1);
-            %             try
-            %             close(ff);
-            %             catch
-            %             end
+%                         figure;
+%                         imagesc(Zinterp); hold on;
+%                         title(['ColNr ',num2str(whichCol)]);
+%                         pause(1);
+%                         try
+%                         close(ff);
+%                         catch
+%                         end
             
             % telling user how long remains
             
@@ -9499,7 +9500,7 @@ p.showplot=0; waittime=1;
                             firstCol(t)=1;%if it was not possible, insert 1 (becomes 0 afterwards)
                         end
                         if t<length(p.l)-4
-                            if firstCol(t)>nanmean(firstCol(t+1:t+3))
+                            if firstCol(t)>mean(firstCol(t+1:t+3), 'omitnan')
                                 firstCol(t)=nan;
                                 continue
                             end
@@ -9741,7 +9742,7 @@ p.showplot=0; waittime=1;
                L(whichCol)=1;
             end
     %         radius median is smaller than 3pixels
-           if median(A)<3
+           if median(A, 'omitnan')<3
                L(whichCol)=1;
            end
 
@@ -9969,9 +9970,9 @@ p.showplot=0; waittime=1;
             k.fig=axes('Parent', k.kymo, 'Color', [0.8 0.9 0.8], 'Visible', 'off', 'Xcolor', 'none','Ycolor', 'none','Position', [0 0 1 1]);
             imshow(imrotate((Kymo.Kymo{whichCol}), 90));hold on; axis on
             if strcmp(p.TappMode, 'um')
-                p.RdetThreshPx=round(p.RdetThreshUm/nanmean(p.umConversion));
+                p.RdetThreshPx=round(p.RdetThreshUm/mean(p.umConversion, 'omitnan'));
             else
-                p.RdetThreshUm=round(p.RdetThreshPx*nanmean(p.umConversion));
+                p.RdetThreshUm=round(p.RdetThreshPx*mean(p.umConversion, 'omitnan'));
             end
             ax = gca;
             ax.Toolbar.Visible = 'off';
@@ -10292,12 +10293,12 @@ p.showplot=0; waittime=1;
         end
         
         if strcmp(p.TappMode, 'um')
-            p.RdetThreshPx=round(p.RdetThreshUm/nanmean(p.umConversion));
+            p.RdetThreshPx=round(p.RdetThreshUm/mean(p.umConversion, 'omitnan'));
         else
-            p.RdetThreshUm=round(p.RdetThreshPx*nanmean(p.umConversion));
+            p.RdetThreshUm=round(p.RdetThreshPx*mean(p.umConversion, 'omitnan'));
         end
         
-        % p.RdetThreshUm=p.RdetThreshPx*nanmean(p.umConversion); %and in um
+        % p.RdetThreshUm=p.RdetThreshPx*mean(p.umConversion); %and in um
         p.RdetSafety=10; %how many frames it needs to stay above p.RdetThreshUm to define it as time
         
         
@@ -10998,7 +10999,7 @@ p.showplot=0; waittime=1;
             
             if mod(w,2)
                 % Initialise Sums and counts
-                SumPoints = NaNsum(Y(1:halfw+1));
+                SumPoints = sum(Y(1:halfw+1));
                 NumPoints = sum(~isnan(Y(1:halfw+1)));
                 
                 % Loop through producing sum and count
@@ -11018,7 +11019,7 @@ p.showplot=0; waittime=1;
                 end
             else
                 % Initialise Sums and counts
-                SumPoints = NaNsum(Y(1:halfw))+0.5*Y(halfw+1);
+                SumPoints = sum(Y(1:halfw))+0.5*Y(halfw+1);
                 NumPoints = sum(~isnan(Y(1:halfw)))+0.5;
                 
                 % Loop through producing sum and count
@@ -11053,7 +11054,7 @@ p.showplot=0; waittime=1;
             SmoothY=s./np;
         end
         
-        function y = NaNsum(x)
+        function y = sum(x)
             y = sum(x(~isnan(x)));
         end
     end %smoothing function that can deal with nans
@@ -11784,30 +11785,21 @@ p.showplot=0; waittime=1;
     function customdrawnow(~,~)
         drawnow
         try
-            if isprop(hs.fig, 'Toolbar')
-                hs.fig.Toolbar.Visible = 'off';
-            end
-            if isprop(hs.Progress1, 'Toolbar')
-                hs.Progress1.Toolbar.Visible = 'off';
-            end
-            if isprop(hs.Progress2, 'Toolbar')
-                hs.Progress2.Toolbar.Visible = 'off';
-            end
+            if ~verLessThan('Matlab','9.12')
+                if isprop(hs.fig, 'Toolbar')
+                    hs.fig.Toolbar.Visible = 'off';
+                end
+                if isprop(hs.Progress1, 'Toolbar')
+                    hs.Progress1.Toolbar.Visible = 'off';
+                end
+                if isprop(hs.Progress2, 'Toolbar')
+                    hs.Progress2.Toolbar.Visible = 'off';
+                end
+            end 
         catch
         end
     end
-    function val = nansum(vect)
-        vect = vect(~isnan(vect));
-        val = sum(vect);
-    end
-    function val = nanmean(vect)
-        vect = vect(~isnan(vect));
-        val = mean(vect);
-    end
-    function val = nanmedian(vect)
-        vect = vect(~isnan(vect));
-        val = median(vect);
-    end
+
 %% functions from external sources
     function imgzoompan(hfig, varargin)
         % imgzoompan provides instant mouse zoom and pan
@@ -11933,7 +11925,7 @@ p.showplot=0; waittime=1;
                 %             end
                 
                 % calculate the new XLim and YLim
-                cpaxes = mean(axish.CurrentPoint);
+                cpaxes = mean(axish.CurrentPoint, 'omitnan');
                 newXLim = (axish.XLim - cpaxes(1)) * (opt.Magnify * opt.XMagnify)^scrollChange + cpaxes(1);
                 newYLim = (axish.YLim - cpaxes(2)) * (opt.Magnify * opt.YMagnify)^scrollChange + cpaxes(2);
                 
@@ -12227,8 +12219,8 @@ if try_ver==1
         ixsp=strfind(onlinedata,'(');
         onlinedata=onlinedata(1:ixsp-2);
         ixp=strfind(onlinedata,'.');
-        version_online=sum([str2double(onlinedata(1:ixp(1)-1))*1e3 str2double(onlinedata(ixp(1)+1:ixp(2)-1))*1e2  str2double(onlinedata(ixp(2)+1:ixp(3)-1))*1e1 str2double(onlinedata(ixp(3)+1:end))]);
-        version=sum([version(1)*1e3 version(2)*1e2 version(3)*1e1 version(4)]);
+        version_online=sum([str2double(onlinedata(1:ixp(1)-1))*1e3 str2double(onlinedata(ixp(1)+1:ixp(2)-1))*1e2  str2double(onlinedata(ixp(2)+1:ixp(3)-1))*1e1 str2double(onlinedata(ixp(3)+1:end))], 'omitnan');
+        version=sum([version(1)*1e3 version(2)*1e2 version(3)*1e1 version(4)], 'omitnan');
         if version_online>version
             warndlg(['NOTE: A more recent version (ver. ',num2str(version_online(1,1)),'.',num2str(version_online(1,2)),'.',num2str(version_online(1,3)),'.',num2str(version_online(1,4)),') of VoronoiLimit is now available on the mathworks fileexchange. Currently running version ',num2str(version(1,1)),'.',num2str(version(1,2)),'.',num2str(version(1,3)),'.',num2str(version(1,4))])
             pause(2)
@@ -12479,7 +12471,7 @@ try
                 %    (0=crossing. 1=no crossing)
                 polygon=[V(C{ij},1),V(C{ij},2)];
                 if any(isinf(polygon(:)))
-                    polygon(isinf(sum(polygon,2)),:)=[];
+                    polygon(isinf(sum(polygon,2), 'omitnan'),:)=[];
                 end
                 ixok=false(length(ixa),length(ixb),5);
                 for ic1=1:length(ixa)
@@ -12605,7 +12597,7 @@ try
     %   1=vertices outside boundaries but no crossing of boundary lines (resolve now)
     %   2=vertices outside boundaries AND crossing of boundary lines (resolve later)
     for ij=1:length(C)
-        if sum(allVixinp(C{ij}))~=length(C{ij})
+        if sum(allVixinp(C{ij}), 'omitnan')~=length(C{ij})
             poly_ok(ij)=1;
             % Q: when drawing a line between the open ends of the polygon, does it intersect with the extreme (rectangle) data boundaries?
             % If so, connect the open ends to the extreme boundaries so that this is no longer the case.
@@ -12692,7 +12684,7 @@ try
 
                         end
                         neighbors{ij}=unique(neighbors{ij});
-                        neighbors_ok_ratio(ij,:)=[sum(poly_ok(neighbors{ij})==0)/numel(neighbors{ij}) ixpo_new(ij) ij];
+                        neighbors_ok_ratio(ij,:)=[sum(poly_ok(neighbors{ij})==0, 'omitnan')/numel(neighbors{ij}) ixpo_new(ij) ij];
                     end
                     if length(ixpo_new)>1
                         neighbors_ok_ratio=flipud(sortrows(neighbors_ok_ratio));
@@ -12844,7 +12836,7 @@ try
                                                 overlap(in)=1;
                                             end
                                         end
-                                        if sum(overlap)~=0
+                                        if sum(overlap, 'omitnan')~=0
                                             diagnostics(ctr,ik)=0;
                                         end
                                     end
@@ -12950,8 +12942,8 @@ try
             end
         end
         if any(any(isemp'))
-            C(sum(isemp,2)~=0)=[];
-            XY(sum(isemp,2)~=0,:)=[];
+            C(sum(isemp,2, 'omitnan')~=0)=[];
+            XY(sum(isemp,2, 'omitnan')~=0,:)=[];
         end
     end
     
@@ -13050,7 +13042,7 @@ try
                 Csplit{ij}{ik}=C_temp(ix_begin:ix_end);
                 inpol=inpolygon(XY(ij,1),XY(ij,2),xClosed(ix_begin:ix_end),yClosed(ix_begin:ix_end));
                 if inpol==0
-                    XYsplit{ij}(ik,:)=[mean(xClosed(ix_begin:ix_end)) mean(yClosed(ix_begin:ix_end))];
+                    XYsplit{ij}(ik,:)=[mean(xClosed(ix_begin:ix_end), 'omitnan') mean(yClosed(ix_begin:ix_end), 'omitnan')];
                 else
                     XYsplit{ij}(ik,:)=XY(ij,:);
                 end
@@ -13131,7 +13123,7 @@ try
             title({'Original Voronoi Decomposition ({\color{blue}blue})';'New limited Voronoi Decomposition ({\color{red}red})'},'fontsize',16,'fontweight','bold')
             if exist('bs_int','var')
                 for ii=1:length(bs_int)
-                    text(mean(unique(bs_int{ii}(:,1))),mean(unique(bs_int{ii}(:,2))),num2str(ii),'fontsize',30,'fontweight','bold','horizontalalignment','center')
+                    text(mean(unique(bs_int{ii}(:,1)), 'omitnan'),mean(unique(bs_int{ii}(:,2)), 'omitnan'),num2str(ii),'fontsize',30,'fontweight','bold','horizontalalignment','center')
                 end
             end
         end
@@ -13506,7 +13498,7 @@ Nc = ifftshift(-fix(nc/2):ceil(nc/2)-1);
 
 if usfac == 0
     % Simple computation of error and phase difference without registration
-    CCmax = sum(buf1ft(:).*conj(buf2ft(:)));
+    CCmax = sum(buf1ft(:).*conj(buf2ft(:)), 'omitnan');
     row_shift = 0;
     col_shift = 0;
 elseif usfac == 1
@@ -13560,8 +13552,8 @@ elseif usfac > 1
     
 end  
 
-rg00 = sum(abs(buf1ft(:)).^2);
-rf00 = sum(abs(buf2ft(:)).^2);
+rg00 = sum(abs(buf1ft(:)).^2, 'omitnan');
+rf00 = sum(abs(buf2ft(:)).^2, 'omitnan');
 error = 1.0 - abs(CCmax).^2/(rg00*rf00);
 error = sqrt(abs(error));
 diffphase = angle(CCmax);
@@ -13694,8 +13686,8 @@ return
             marg_h = [marg_h marg_h];
         end
         
-        axh = (1-sum(marg_h)-(Nh-1)*gap(1))/Nh;
-        axw = (1-sum(marg_w)-(Nw-1)*gap(2))/Nw;
+        axh = (1-sum(marg_h, 'omitnan')-(Nh-1)*gap(1))/Nh;
+        axw = (1-sum(marg_w, 'omitnan')-(Nw-1)*gap(2))/Nw;
         
         py = 1-marg_h(2)-axh;
         
